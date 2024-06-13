@@ -1,3 +1,4 @@
+
 source("daly_estimator.R")
 
 plot_averages <- function(output, number_labels = TRUE)
@@ -15,14 +16,19 @@ plot_averages <- function(output, number_labels = TRUE)
                  aes(x=average_or_detected, y=value, fill=ordered_component)) +  
     geom_col(position = "stack", width = 1) +  
     theme_minimal() + xlab("") + ylab("DALYs") + ggtitle("Total DALYS per average case") + 
-    guides(fill="none") 
+    guides(fill="none") +
+    theme(axis.text.x = element_blank(),
+          axis.ticks.x = element_blank(),
+          panel.grid.major.x = element_blank(),
+          panel.grid.minor.x = element_blank())
+    
   
-  if (number_labels) plot <- plot + geom_text(aes(label = paste0(ordered_component, ", ",round(value,1))),
+  if (number_labels) plot <- plot + geom_text(aes(label = paste0  (ordered_component, ", ",round(value,1))),
                                               position = position_stack(vjust = .5)) else
                                                 plot <- plot + geom_text(aes(label = ordered_component),
                                                                          position = position_stack(vjust = .5))
                                               
-                                              return(plot)
+ return(plot)
 }
 
 plot_averages()
@@ -35,20 +41,20 @@ plot_detectable_proportion <- function(totals_plot, estimates=midpoint_estimates
     detectable_period_plot <- 
       totals_plot + geom_rect(aes(xmin=0.5, xmax=0.5 + predetection_mm, ymin=0, 
                                   ymax= sum(totals_plot$data %>% filter(name!="transmission") %>% select(value))), 
-                              fill="gray", alpha=0.4) + 
+                              fill="gray", alpha=0.3) + 
       geom_rect(aes(xmin=0.5, xmax= 0.5 + predetection_transmission,
                     ymin= sum(totals_plot$data %>% filter(name!="transmission") %>% select(value))), 
                 ymax= sum(totals_plot$data %>% select(value)), 
-                fill="gray", alpha=0.4) + 
+                fill="gray", alpha=0.3) + 
       annotate(geom="text", x=0.5 + predetection_mm/2, y=0.1, 
                label="Accrues before detectability", angle=90, hjust=0) +
       geom_rect(aes(xmin=1.5 - postrx_mm, xmax=1.5, ymin=0, 
                     ymax= sum(totals_plot$data %>% filter(name!="transmission") %>% select(value))), 
-                fill="gray", alpha=0.4) + 
+                fill="gray", alpha=0.3) + 
       geom_rect(aes(xmin=1.5 - postrx_transmission, xmax= 1.5,
                     ymin= sum(totals_plot$data %>% filter(name!="transmission") %>% select(value))), 
                 ymax= sum(totals_plot$data %>% select(value)), 
-                fill="gray", alpha=0.4) + 
+                fill="gray", alpha=0.3) + 
       annotate(geom="text", x=1.5 - postrx_mm/2, y=0.1, 
                label="Accrues after routine diagnosis", angle=90, hjust=0) + 
       ggtitle("Avertible DALYs per average case")
@@ -66,9 +72,9 @@ plot_time_course <- function(estimates=midpoint_estimates)
   plotdata <- rbind(averages_and_avertibles,
                     averages_and_avertibles %>% filter(cumulative_or_averted=="cumulative") %>%
                       mutate(cumulative_or_averted="detectable",
-                             value = value*case_when(name=="transmission" ~ (1-estimates$predetection_transmission - estimates$postrx_transmission),
-                                                     TRUE ~ (1-estimates$predetection_mm - estimates$postrx_mm)),
-                    averages_and_avertibles %>% filter(cumulative_or_averted=="cumulative")) %>%
+                             value = value*case_when(name=="transmission" ~ (1-estimates$predetection_transmission -    estimates$postrx_transmission),
+                                                     TRUE ~ (1-estimates$predetection_mm - estimates$postrx_mm))),
+                    averages_and_avertibles %>% filter(cumulative_or_averted=="cumulative") %>%
                       mutate(cumulative_or_averted="pre",
                              value = value*case_when(name=="transmission" ~ estimates$predetection_transmission,
                                                      TRUE ~ estimates$predetection_mm)),
@@ -150,50 +156,63 @@ plot_time_course <- function(estimates=midpoint_estimates)
                names_pattern = "(\\D)(\\d+)" )
   
 
-  ggplot(data = toplot) + 
+  time_course_plot <- ggplot(data = toplot) + 
     geom_polygon(aes(x=x, y=y, group=component, fill=component)) + 
-  xlab("Time (arbitrary scale)") + ylab ("DALY accrual rate (arbitraty scale)") + 
-    scale_x_discrete(labels = NULL, breaks = NULL) + scale_y_discrete(labels = NULL, breaks = NULL) + 
+    xlab("Time (arbitrary scale)") + 
+    ylab ("DALY accrual rate (arbitrary scale)") + 
+    scale_x_discrete(labels = NULL, breaks = NULL) + 
+    scale_y_discrete(labels = NULL, breaks = NULL) + 
     theme_minimal() + 
-    geom_rect(data=rect_points_stacked, aes(xmin=min(x1), xmax=max(x3), ymin=0, ymax=max(y4)), col="gray", alpha=0.1) + 
-    geom_rect(data=rect_points_stacked, aes(xmin=min(x4), xmax=max(x6), ymin=0, ymax=max(y4)), col="gray", alpha=0.1) +
+    geom_rect(data=rect_points_stacked, aes(xmin=min(x1), xmax=max(x3), ymin=0, ymax=max(y4)), fill="gray", alpha=0.3)+ 
+    geom_rect(data=rect_points_stacked, aes(xmin=min(x4), xmax=max(x6), ymin=0, ymax=max(y4)), fill="gray", alpha=0.3) +
     geom_vline(xintercept = -1, linetype=2) + geom_vline(xintercept = 1, linetype=2) + 
     annotate(geom = "text", x= (min(rect_points_stacked$x1)-1)/2, y=max(rect_points_stacked$y4)/2, label="before detectability", angle=90) + 
     annotate(geom = "text", x= (max(rect_points_stacked$x6)+1)/2, y=max(rect_points_stacked$y4)/2, label="after routine detection", angle=90)
 
-    
-    # reshape the above so that it's on a time scale. 
-    # Mark start and end of detectable periods. 
-    # - Same width for mm and transmission (and adjust the heights).
-    # - Plot increase within detectable period, considering that mean of first half coccurs at 1/4 t, and of second half at 3/4 t. 
-      # --     0.5*resolving_detectable + second_half_vs_first_mm*(1-resolving_detectable)
-    # - Plot the before-detectability and after-diagnosis areas as decays to arbitrary time points, each ~1/3 of detectable period?. 
-    
-    
+    return(time_course_plot)
+}
 
+plot_time_course()  
+
+
+# As three vertically arranged panels, 
+# Plot the distubion of probabilities of detection during cross-section screening 
+# (corresponding to the duration of the detectable period),
+# and then scatted plots showign the relationship between this duration and the 
+# corresponding relative contributions to transmission and mortality. 
+
+
+plot_heterogeneity <- function(estimates = midpoint_estimates,
+                              N = 10000) # fewer than in quantitative function
+{
+  qs <- runif(N, 0, 1)
+
+  relative_durations <- qlnorm(qs, unlist(solve_for_log_normal_parameters(1, estimates$duration_cv)))
     
+   # and for each, get the corresponding relative-DALY multipliers for mortality and transmission:
+   # unlike when I was averaging, I should include some noise here
+  dalys_mortality_quantile <- qlnorm(p = `if`(estimates$duration_tbdeath_multiplier>0, qs, 1-qs),  
+                                     unlist(solve_for_log_normal_parameters(1, 
+                                                              estimates$duration_cv*abs(estimates$duration_tbdeath_multiplier)))) #meanlog and sdlog
+  relative_dalys_mortality <- rnorm(N, dalys_mortality_quantile, 0.2)
+  dalys_transmission_quantile <- qlnorm(p = `if`(estimates$duration_transmission_multiplier>0, qs, 1-qs),
+                                          unlist(solve_for_log_normal_parameters(1, estimates$duration_cv*abs(estimates$duration_transmission_multiplier))))
+  relative_dalys_transmission <- rnorm(N, dalys_transmission_quantile, 0.1*dalys_transmission_quantile)
     
-    # from prior funciton:
-        detectable_period_plot <- 
-      totals_plot + geom_rect(aes(xmin=0.5, xmax=0.5 + predetection_mm, ymin=0, 
-                                  ymax= sum(totals_plot$data %>% filter(name!="transmission") %>% select(value))), 
-                              fill="gray", alpha=0.4) + 
-      geom_rect(aes(xmin=0.5, xmax= 0.5 + predetection_transmission,
-                    ymin= sum(totals_plot$data %>% filter(name!="transmission") %>% select(value))), 
-                ymax= sum(totals_plot$data %>% select(value)), 
-                fill="gray", alpha=0.4) + 
-      annotate(geom="text", x=0.5 + predetection_mm/2, y=0.1, 
-               label="Accrues before detectability", angle=90, hjust=0) +
-      geom_rect(aes(xmin=1.5 - postrx_mm, xmax=1.5, ymin=0, 
-                    ymax= sum(totals_plot$data %>% filter(name!="transmission") %>% select(value))), 
-                fill="gray", alpha=0.4) + 
-      geom_rect(aes(xmin=1.5 - postrx_transmission, xmax= 1.5,
-                    ymin= sum(totals_plot$data %>% filter(name!="transmission") %>% select(value))), 
-                ymax= sum(totals_plot$data %>% select(value)), 
-                fill="gray", alpha=0.4) + 
-      annotate(geom="text", x=1.5 - postrx_mm/2, y=0.1, 
-               label="Accrues after routine diagnosis", angle=90, hjust=0) + 
-      ggtitle("Avertible DALYs per average case")
-    return(detectable_period_plot)
-  } )
+# Start first of three ggplot figures to be arranged in a column of panels
+figure1 <- ggplot(as_tibble(relative_durations)) + 
+  geom_density(aes(x=value), fill="blue", alpha=0.5) +
+  xlim(0, quantile(relative_durations, 0.95)) +
+  theme_void() + 
+  labs(x = NULL, y = NULL) +
+  theme(plot.margin = margin(10, 10, 10, 10))
+
+# Now scatter plot of relative durations vs relative DALYs for mortality
+figure2 <- ggplot(as_tibble(cbind(relative_durations, relative_dalys_mortality))) + 
+  geom_point(aes(x=relative_durations, y=relative_dalys_mortality), alpha=0.5) +
+  xlim(0, quantile(relative_durations, 0.99)) +
+  theme_minimal() + 
+  labs(x = "Relative duration", y = "Relative DALYs for mortality") +
+  theme(plot.margin = margin(10, 10, 10, 10))
+
 }

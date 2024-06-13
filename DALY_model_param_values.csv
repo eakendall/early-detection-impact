@@ -17,6 +17,6 @@
 "predetection_transmission",0.05,0,0.1,"predetection_transmission"
 "postrx_mm",0.25,0,1,"postrx_mm"
 "postrx_transmission",0.1,0,0.5,"postrx_transmission"
-"duration_cv",0.5,0.25,0.75,"duration_cv"
+"duration_cv",0.25,0.1,0.5,"duration_cv"
 "duration_tbdeath_multiplier",-0.5,-1,0,"duration_tbdeath_multiplier"
 "duration_transmission_multiplier",1,0.5,1.5,"duration_transmission_multiplier"

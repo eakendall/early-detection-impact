@@ -23,7 +23,7 @@ params$postrx_mm <- c(0.25,0,1) # proportion of morbidity, mortality, and post-T
 params$postrx_transmission <- c(0.1,0,0.5) # proportion of transmission that occurs after routine detection
 
 
-params$duration_cv <- c(0.5,0.25,0.75) # will simulation log-normal distribution of durations
+params$duration_cv <- c(0.25,0.1,0.5) # will simulate gamma distribution of durations
 params$duration_tbdeath_multiplier <- c(-0.5, -1, 0) # Relationship between total duration (in absence of ACF) and mortality risk = -0.5?
 params$duration_transmission_multiplier <- c(1, 0.5, 1.5) # Relationship between of total duration (in absence of ACF) and total transmission = 1?
 # Will map duration to DALY multipliers (relative to average DALYs), as quantiles of log-normal distributions. 
