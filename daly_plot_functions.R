@@ -1,3 +1,5 @@
+source("daly_estimator.R")
+
 plot_averages <- function(output, number_labels = TRUE)
 {
  

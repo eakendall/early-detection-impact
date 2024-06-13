@@ -1,3 +1,4 @@
+if(!exists("midpoint_estimates")) source("define_params.R")
 
 #### Per average case ####
 
@@ -113,34 +114,15 @@ between_case_differences <- function(estimates = midpoint_estimates)
 #### Put it all together #####
 daly_estimator <- function(estimates = midpoint_estimates)
 {
-  with(dalys_per_average_case(estimates), 
-       with(within_case_avertible(estimates),
-            with(between_case_differences(estimates), {
-                                     
-                transmission_averted <- average_proportion_avertible_transmission*transmission_average_case*avertible_transmission_multiplier_detected
-                morbidity_averted <- average_proportion_avertible_mm * morbidity_average_case
-                mortality_averted <- average_proportion_avertible_mm * mortality_average_case * avertible_mortality_multiplier_detected
-                sequelae_averted <-  average_proportion_avertible_mm * sequelae_average_case
-                
-                total_averted <- transmission_averted + morbidity_averted + mortality_averted + sequelae_averted  
-              
-            
-                return(list("total_averted" = total_averted, 
-                            "transmission_averted" = transmission_averted,
-                            "morbidity_averted" = morbidity_averted, 
-                            "mortality_averted" = mortality_averted, 
-                            "sequelae_averted" = sequelae_averted 
-                            # "total_average_case" = downstream_dalys_average + tb_morbidity_dalys_average + tb_mortality_dalys_average + posttb_dalys_average,
-                            # "transmission_average_case" = downstream_dalys_average,
-                            # "morbidity_average_case" = tb_morbidity_dalys_average,
-                            # "mortality_average_case" = tb_mortality_dalys_average,
-                            # "sequelae_average_case" = posttb_dalys_average,
-                            # "average_proportion_avertible_mm" = average_proportion_avertible_mm,
-                            # "average_proportion_avertible_transmission" = average_proportion_avertible_transmission,
-                            # "avertible_mortality_multiplier_detected" = case_dalys_mortality_multiplier,
-                            # "avertible_transmission_multiplier_detected" = case_dalys_transmission_multiplier
-                            ))
-  })))
+  
+  cumulativerows <- within_case_cumulative_and_averted(estimates) 
+  detectedrows <- within_case_cumulative_and_averted(estimates) %>% mutate(
+    average_or_detected = "detected",
+    value = value * case_when(name=="transmission" ~ between_case_differences(estimates)$avertible_transmission_multiplier_detected,
+                              name=="mortality"~ between_case_differences(estimates)$avertible_mortality_multiplier_detected,
+                              TRUE ~ 1))
+  
+  return(rbind(cumulativerows, detectedrows))
 }
 
 daly_estimator(midpoint_estimates)
