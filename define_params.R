@@ -23,12 +23,14 @@ params$postrx_mm <- c(0.25,0,1) # proportion of morbidity, mortality, and post-T
 params$postrx_transmission <- c(0.1,0,0.5) # proportion of transmission that occurs after routine detection
 
 
-params$duration_cv <- c(0.25,0.1,0.5) # will simulate gamma distribution of durations
+params$duration_cv <- c(0.5,0.25, 1) # will simulate gamma distribution of durations
 params$duration_tbdeath_multiplier <- c(-0.5, -1, 0) # Relationship between total duration (in absence of ACF) and mortality risk = -0.5?
 params$duration_transmission_multiplier <- c(1, 0.5, 1.5) # Relationship between of total duration (in absence of ACF) and total transmission = 1?
-# Will map duration to DALY multipliers (relative to average DALYs), as quantiles of log-normal distributions. 
+# Will map duration to DALY multipliers (relative to average DALYs), as quantiles of gamma distributions. 
 # I.e. multiplier of 1 means distributions have same sd and direction, 2 means DALY distribution has twice the sd (cv) and same direction,
 # and -0.5 means DALY distribution has half the sd and we invert the mapping, i.e. nth quantile maps to (1-n)th. 
+# All will be on relative scales so modeled as having means of 1. 
+# And there may be additional variance in tarnsmission and mortality that are not captured by duration. We'll illustrate this in figures but won't otherwise model it since we're interested only in means of those detected vs not. 
 
 paramdf <- as.data.frame(t(as.data.frame(params)))
 colnames(paramdf) <- c("mid","low","high")

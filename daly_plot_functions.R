@@ -1,6 +1,9 @@
 
 source("daly_estimator.R")
 
+library(gridExtra)
+
+
 plot_averages <- function(output, number_labels = TRUE)
 {
  
@@ -183,36 +186,57 @@ plot_time_course()
 
 
 plot_heterogeneity <- function(estimates = midpoint_estimates,
-                              N = 10000) # fewer than in quantitative function
+                              N = 1000) # fewer than in quantitative function
 {
   qs <- runif(N, 0, 1)
 
-  relative_durations <- qlnorm(qs, unlist(solve_for_log_normal_parameters(1, estimates$duration_cv)))
+  relative_durations <-  qgamma(p=qs, 
+                                shape=(solve_for_gamma_parameters(mean=1, sd=estimates$duration_cv))[['shape']], 
+                                scale=(solve_for_gamma_parameters(mean=1, sd=estimates$duration_cv))[['scale']])
     
    # and for each, get the corresponding relative-DALY multipliers for mortality and transmission:
    # unlike when I was averaging, I should include some noise here
-  dalys_mortality_quantile <- qlnorm(p = `if`(estimates$duration_tbdeath_multiplier>0, qs, 1-qs),  
-                                     unlist(solve_for_log_normal_parameters(1, 
-                                                              estimates$duration_cv*abs(estimates$duration_tbdeath_multiplier)))) #meanlog and sdlog
-  relative_dalys_mortality <- rnorm(N, dalys_mortality_quantile, 0.2)
-  dalys_transmission_quantile <- qlnorm(p = `if`(estimates$duration_transmission_multiplier>0, qs, 1-qs),
-                                          unlist(solve_for_log_normal_parameters(1, estimates$duration_cv*abs(estimates$duration_transmission_multiplier))))
-  relative_dalys_transmission <- rnorm(N, dalys_transmission_quantile, 0.1*dalys_transmission_quantile)
+  relative_dalys_mortality <- qgamma(p = `if`(estimates$duration_tbdeath_multiplier>0, qs, 1-qs),  
+                                    shape=(solve_for_gamma_parameters(mean=1, sd=estimates$duration_cv*abs(estimates$duration_tbdeath_multiplier)))[['shape']], 
+                                      scale=(solve_for_gamma_parameters(mean=1, sd=estimates$duration_cv*abs(estimates$duration_tbdeath_multiplier)))[['scale']])
+  relative_dalys_mortality_withnoise <- 
+      rnorm(N, mean=relative_dalys_mortality, sd=0.2*relative_dalys_mortality)
+  
+  relative_dalys_transmission <- qgamma(p = `if`(estimates$duration_transmission_multiplier>0, qs, 1-qs), 
+                                        shape=(solve_for_gamma_parameters(mean=1, sd=estimates$duration_cv*abs(estimates$duration_transmission_multiplier)))[['shape']],
+                                        scale=(solve_for_gamma_parameters(mean=1, sd=estimates$duration_cv*abs
+                                        (estimates$duration_transmission_multiplier)))[['scale']]) 
+  relative_dalys_transmission_withnoise <- 
+      rnorm(N, mean=relative_dalys_transmission, sd=0.2*relative_dalys_transmission)
     
 # Start first of three ggplot figures to be arranged in a column of panels
 figure1 <- ggplot(as_tibble(relative_durations)) + 
   geom_density(aes(x=value), fill="blue", alpha=0.5) +
-  xlim(0, quantile(relative_durations, 0.95)) +
-  theme_void() + 
-  labs(x = NULL, y = NULL) +
+  xlim(0, quantile(relative_durations, 0.999)) +
+  theme_minimal() + 
+  labs(x = NULL, y = "Proportion of incident TB") +
+    theme(axis.text.y = element_blank(), plot.margin = margin(10, 10, 10, 10))
+  
+# Now scatter plot of relative durations vs relative DALYs for mortality
+figure2 <- ggplot(as_tibble(cbind(relative_durations, relative_dalys_mortality_withnoise))) + 
+  geom_point(aes(x=relative_durations, y=relative_dalys_mortality_withnoise), alpha=0.5) +
+  xlim(0, quantile(relative_durations, 0.999)) +
+  theme_minimal() + 
+  labs(x = NULL, y = "Relative DALYs from TB mortality") +
   theme(plot.margin = margin(10, 10, 10, 10))
 
-# Now scatter plot of relative durations vs relative DALYs for mortality
-figure2 <- ggplot(as_tibble(cbind(relative_durations, relative_dalys_mortality))) + 
-  geom_point(aes(x=relative_durations, y=relative_dalys_mortality), alpha=0.5) +
-  xlim(0, quantile(relative_durations, 0.99)) +
-  theme_minimal() + 
-  labs(x = "Relative duration", y = "Relative DALYs for mortality") +
+# and vs relative DALYs for transmission
+figure3 <- ggplot(as_tibble(cbind(relative_durations, relative_dalys_transmission_withnoise))) + 
+  geom_point(aes(x=relative_durations, y=relative_dalys_transmission_withnoise), alpha=0.5) +
+  xlim(0, quantile(relative_durations, 0.999)) +
+  theme_minimal() +
+  labs(x = "Relative duration", y = "Relative DALYs from transmission") +
   theme(plot.margin = margin(10, 10, 10, 10))
+
+# Arrange the three figures in a column
+
+return(grid.arrange(figure1, figure2, figure3, ncol=1))
 
 }
+
+plot_heterogeneity()

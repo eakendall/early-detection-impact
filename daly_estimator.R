@@ -85,7 +85,7 @@ within_case_cumulative_and_averted()
   }
   
   # Gamma distribution version of the above function: for specified sd and mean,  get the shape and scale parameters
-  solve_for_gamma_parameters <- function(sd, mean)
+  solve_for_gamma_parameters <- function(mean, sd)
   {
     shape = mean^2/sd^2
     scale = sd^2/mean
@@ -102,15 +102,18 @@ between_case_differences <- function(estimates = midpoint_estimates,
 
   with(estimates, {
 
-    # relative_durations <- qlnorm(qs, unlist(solve_for_log_normal_parameters(1, duration_cv)))
-    relative_durations <- qgamma(p=qs, shape=(solve_for_gamma_parameters(1, duration_cv))[['shape']], rate=(solve_for_gamma_parameters(1, duration_cv))[['scale']])
+    relative_durations <- qgamma( p=qs, 
+                                  shape=(solve_for_gamma_parameters(1, duration_cv))[['shape']], 
+                                  scale=(solve_for_gamma_parameters(1, duration_cv))[['scale']])
   
     # and for each, get the corresponding relative-DALY multipliers for mortality and transmission:
     # (don't need noise here since we'll just be averaging)
-    relative_dalys_mortality <- qlnorm(p = `if`(duration_tbdeath_multiplier>0, qs, 1-qs),
-                                       unlist(solve_for_log_normal_parameters(1, duration_cv*abs(duration_tbdeath_multiplier))))
-    relative_dalys_transmission <- qlnorm(p = `if`(duration_transmission_multiplier>0, qs, 1-qs),
-                                          unlist(solve_for_log_normal_parameters(1, duration_cv*abs(duration_transmission_multiplier))))
+    relative_dalys_mortality <- qgamma(p = `if`(duration_tbdeath_multiplier>0, qs, 1-qs),
+                                       shape=(solve_for_gamma_parameters(1, duration_cv * abs(duration_tbdeath_multiplier)))[['shape']],
+                                       scale=(solve_for_gamma_parameters(1, duration_cv * abs(duration_tbdeath_multiplier)))[['scale']])
+    relative_dalys_transmission <- qgamma(p = `if`(duration_transmission_multiplier>0, qs, 1-qs),
+                                           shape=(solve_for_gamma_parameters(1, duration_cv * abs(duration_transmission_multiplier)))[['shape']],
+                                            scale=(solve_for_gamma_parameters(1, duration_cv * abs(duration_transmission_multiplier)))[['scale']])
     
     # And simulate an ACF sample and their relative mortality and transmission DALYs, relative to the averages
     ACF_cases <- sample(1:N, size=N, replace = T, prob = relative_durations)
