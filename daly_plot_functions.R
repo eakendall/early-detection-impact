@@ -2,6 +2,7 @@
 source("daly_estimator.R")
 
 library(gridExtra)
+library(kableExtra)
 
 
 plot_averages <- function(output, number_labels = TRUE)
@@ -26,7 +27,7 @@ plot_averages <- function(output, number_labels = TRUE)
           panel.grid.minor.x = element_blank())
     
   
-  if (number_labels) plot <- plot + geom_text(aes(label = paste0  (ordered_component, ", ",round(value,1))),
+  if (number_labels) plot <- plot + geom_text(aes(label = paste0  (ordered_component, ", ",round(value,2))),
                                               position = position_stack(vjust = .5)) else
                                                 plot <- plot + geom_text(aes(label = ordered_component),
                                                                          position = position_stack(vjust = .5))
@@ -222,7 +223,7 @@ figure2 <- ggplot(as_tibble(cbind(relative_durations, relative_dalys_mortality_w
   geom_point(aes(x=relative_durations, y=relative_dalys_mortality_withnoise), alpha=0.5) +
   xlim(0, quantile(relative_durations, 0.999)) +
   theme_minimal() + 
-  labs(x = NULL, y = "Relative DALYs from TB mortality") +
+  labs(x = NULL, y = "Relative DALYs\nfrom TB mortality") +
   theme(plot.margin = margin(10, 10, 10, 10))
 
 # and vs relative DALYs for transmission
@@ -230,7 +231,7 @@ figure3 <- ggplot(as_tibble(cbind(relative_durations, relative_dalys_transmissio
   geom_point(aes(x=relative_durations, y=relative_dalys_transmission_withnoise), alpha=0.5) +
   xlim(0, quantile(relative_durations, 0.999)) +
   theme_minimal() +
-  labs(x = "Relative duration", y = "Relative DALYs from transmission") +
+  labs(x = "Relative duration \n(= relative P(detection))", y = "Relative DALYs\nfrom transmission") +
   theme(plot.margin = margin(10, 10, 10, 10))
 
 # Arrange the three figures in a column
@@ -240,3 +241,63 @@ return(grid.arrange(figure1, figure2, figure3, ncol=1))
 }
 
 plot_heterogeneity()
+
+
+# Display a table of numerical estimates
+
+output_table <- function(output)
+{
+  if(missing(output)) output <- daly_estimator() 
+
+  outputtable <- output %>% 
+    pivot_wider(names_from = cumulative_or_averted, values_from = value) %>% 
+    pivot_wider(names_from = average_or_detected, values_from = c(cumulative, averted)) %>% 
+    mutate_if(is.numeric, format, digits=3) %>%
+    mutate(name = str_to_title(name)) %>%
+    kable(., format = "html",
+          col.names=c("Source of DALYs", rep(c("Average incident case", "Average detected case"), times=2))) %>%
+    kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE) %>%
+    add_header_above(., header =
+      c(" " = 1, "Cumulative DALYs" = 2, "Averted by early detection" = 2))
+
+return(outputtable)
+}
+
+output_table()
+
+# Now a figure similar to plot_averages() but showing DALYs averted per case detected, using the "Averted by early detection, Average detected case" from table above. 
+
+
+plot_averted <- function(output, number_labels = TRUE)
+{
+ 
+  if(missing(output)) output <- daly_estimator()
+   
+  plot <- ggplot(output %>% filter(cumulative_or_averted == "averted",
+                                   average_or_detected == "detected")  %>% 
+                   mutate(component = case_when(str_detect(name, "mortality") ~ "TB Mortality",
+                                                str_detect(name, "morbidity") ~ "TB Morbidity",
+                                                str_detect(name, "sequelae") ~ "Post-TB Sequelae",
+                                                str_detect(name, "transmission") ~ "Transmission")) %>%
+                   mutate(ordered_component = fct_relevel(component, "Transmission", "Post-TB Sequelae", "TB Mortality", "TB Morbidity")),
+                 aes(x=average_or_detected, y=value, fill=ordered_component)) +  
+    geom_col(position = "stack", width = 1) +  
+    theme_minimal() + xlab("") + ylab("DALYs") + ggtitle("DALYS averted per case detected") + 
+    guides(fill="none") +
+    theme(axis.text.x = element_blank(),
+          axis.ticks.x = element_blank(),
+          panel.grid.major.x = element_blank(),
+          panel.grid.minor.x = element_blank())
+    
+  
+  if (number_labels) plot <- plot + geom_text(aes(label = paste0  (ordered_component, ", ",round(value,2))),
+                                              position = position_stack(vjust = .5)) else
+                                                plot <- plot + geom_text(aes(label = ordered_component),
+                                                                         position = position_stack(vjust = .5))
+                                              
+ return(plot)
+}
+
+plot_averted()
+
+

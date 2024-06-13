@@ -141,3 +141,4 @@ daly_estimator <- function(estimates = midpoint_estimates)
 }
 
 daly_estimator(midpoint_estimates)
+

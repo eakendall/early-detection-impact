@@ -2,6 +2,7 @@ library(shiny)
 library(bslib)
 
 source("daly_estimator.R")
+source("daly_plot_functions.R")
 
 paramdf <- read.csv("DALY_model_param_values.csv", header = T)
 
