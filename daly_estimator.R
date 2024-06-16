@@ -102,12 +102,16 @@ between_case_differences <- function(estimates = midpoint_estimates,
 
   with(estimates, {
 
+  gammapars <- solve_for_gamma_parameters(1, duration_cv)
+
     relative_durations <- qgamma( p=qs, 
                                   shape=(solve_for_gamma_parameters(1, duration_cv))[['shape']], 
                                   scale=(solve_for_gamma_parameters(1, duration_cv))[['scale']])
   
     # and for each, get the corresponding relative-DALY multipliers for mortality and transmission:
     # (don't need noise here since we'll just be averaging)
+    # These multipliers are equal to the relative variance (vs variance in duration) times the correlation.
+    # E.g. if duration_cv = 0.5, and overall transmission varies 2x more than duration but cor is 0.5, then transmission multiplier is 2*0.5 = 1, and for a given duration the average transmission will be equal to the duration (on a relative scale). For this model, we don't care how much variance there is in transmission or mortality that's not correlated with duration fo the detectable period. 
     relative_dalys_mortality <- qgamma(p = `if`(duration_tbdeath_multiplier>0, qs, 1-qs),
                                        shape=(solve_for_gamma_parameters(1, duration_cv * abs(duration_tbdeath_multiplier)))[['shape']],
                                        scale=(solve_for_gamma_parameters(1, duration_cv * abs(duration_tbdeath_multiplier)))[['scale']])
@@ -119,6 +123,26 @@ between_case_differences <- function(estimates = midpoint_estimates,
     ACF_cases <- sample(1:N, size=N, replace = T, prob = relative_durations)
     avertible_mortality_multiplier_detected <- mean(relative_dalys_mortality[ACF_cases])
     avertible_transmission_multiplier_detected <- mean(relative_dalys_transmission[ACF_cases])
+
+
+  # Can we do the above analytically? 
+  # If cor = 1, we want the mean (expected) value of a sample of gamma(x) weighted by x, or E[X^2] = shape*(shape+1)*scale^2.   https://online.stat.psu.edu/stat414/lesson/15/15.10
+  # We'll scale this based on the multiplier. 
+
+  # When negative correlation, i'll just invert, and scale it closer to 1 by the multiplier.
+
+
+  gammapars <- solve_for_gamma_parameters(1, duration_cv)
+  
+  avertible_mortality_multiplier_detected_analytic <- `if`(duration_tbdeath_multiplier>0, 
+                                                              1 + (gammapars$shape*(gammapars$shape+1)*(gammapars$scale^2)-1)*(duration_tbdeath_multiplier),
+                                                               1 - (1 - 1/(gammapars$shape*(gammapars$shape+1)*(gammapars$scale^2)))*abs(duration_tbdeath_multiplier))
+
+  avertible_transmission_multiplier_detected_analytic <- `if`(duration_transmission_multiplier>0, 
+                                                              1 + (gammapars$shape*(gammapars$shape+1)*(gammapars$scale^2)-1)*(duration_transmission_multiplier),
+                                                              1 - (1 - 1/(gammapars$shape*(gammapars$shape+1)*(gammapars$scale^2)))*abs(duration_transmission_multiplier))
+
+  
 
     return(list(
       "avertible_mortality_multiplier_detected" = avertible_mortality_multiplier_detected,
@@ -140,5 +164,5 @@ daly_estimator <- function(estimates = midpoint_estimates)
   return(rbind(cumulativerows, detectedrows))
 }
 
-daly_estimator(midpoint_estimates)
+# daly_estimator(midpoint_estimates)
 

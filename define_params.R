@@ -24,13 +24,10 @@ params$postrx_transmission <- c(0.1,0,0.5) # proportion of transmission that occ
 
 
 params$duration_cv <- c(0.5,0.25, 1) # will simulate gamma distribution of durations
-params$duration_tbdeath_multiplier <- c(-0.5, -1, 0) # Relationship between total duration (in absence of ACF) and mortality risk = -0.5?
+params$duration_tbdeath_multiplier <- c(-0.5, -1, 0) # If case A has (1+a) times the average duration (and thus 1+a times the average risk of detection) in absence of ACF, what is its relative risk of death vs the average, in terms of a? For positive a this works fine, e.g. a value of 1 would mean 2x duration -> 2x mortality,  value of 0.5 would mean 2x duration -> 1.5x mortality, and value of 2 would mean 2x duration -> 3x mortality. For negatve a, e.g. -0.5, it means 2x duration -> 0.5x mortality, and -1 means 2x duration -> 0 mortality (so there a lower bound of -1).
+
+
 params$duration_transmission_multiplier <- c(1, 0.5, 1.5) # Relationship between of total duration (in absence of ACF) and total transmission = 1?
-# Will map duration to DALY multipliers (relative to average DALYs), as quantiles of gamma distributions. 
-# I.e. multiplier of 1 means distributions have same sd and direction, 2 means DALY distribution has twice the sd (cv) and same direction,
-# and -0.5 means DALY distribution has half the sd and we invert the mapping, i.e. nth quantile maps to (1-n)th. 
-# All will be on relative scales so modeled as having means of 1. 
-# And there may be additional variance in tarnsmission and mortality that are not captured by duration. We'll illustrate this in figures but won't otherwise model it since we're interested only in means of those detected vs not. 
 
 paramdf <- as.data.frame(t(as.data.frame(params)))
 colnames(paramdf) <- c("mid","low","high")

@@ -35,7 +35,7 @@ plot_averages <- function(output, number_labels = TRUE)
  return(plot)
 }
 
-plot_averages()
+# plot_averages()
 
 plot_detectable_proportion <- function(totals_plot, estimates=midpoint_estimates)
 {
@@ -66,7 +66,7 @@ plot_detectable_proportion <- function(totals_plot, estimates=midpoint_estimates
   } )
 }
 
-plot_detectable_proportion()
+# plot_detectable_proportion()
 
 plot_time_course <- function(estimates=midpoint_estimates)
 {
@@ -176,7 +176,7 @@ plot_time_course <- function(estimates=midpoint_estimates)
     return(time_course_plot)
 }
 
-plot_time_course()  
+# plot_time_course()  
 
 
 # As three vertically arranged panels, 
@@ -240,7 +240,7 @@ return(grid.arrange(figure1, figure2, figure3, ncol=1))
 
 }
 
-plot_heterogeneity()
+# plot_heterogeneity()
 
 
 # Display a table of numerical estimates
@@ -263,7 +263,7 @@ output_table <- function(output)
 return(outputtable)
 }
 
-output_table()
+# output_table()
 
 # Now a figure similar to plot_averages() but showing DALYs averted per case detected, using the "Averted by early detection, Average detected case" from table above. 
 
@@ -298,6 +298,6 @@ plot_averted <- function(output, number_labels = TRUE)
  return(plot)
 }
 
-plot_averted()
+# plot_averted()
 
 
