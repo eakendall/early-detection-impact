@@ -23,11 +23,11 @@ params$postrx_mm <- c(0.25,0,1) # proportion of morbidity, mortality, and post-T
 params$postrx_transmission <- c(0.1,0,0.5) # proportion of transmission that occurs after routine detection
 
 
-params$duration_cv <- c(0.5,0.25, 1) # will simulate gamma distribution of durations
-params$duration_tbdeath_multiplier <- c(-0.5, -1, 0) # If case A has (1+a) times the average duration (and thus 1+a times the average risk of detection) in absence of ACF, what is its relative risk of death vs the average, in terms of a? For positive a this works fine, e.g. a value of 1 would mean 2x duration -> 2x mortality,  value of 0.5 would mean 2x duration -> 1.5x mortality, and value of 2 would mean 2x duration -> 3x mortality. For negatve a, e.g. -0.5, it means 2x duration -> 0.5x mortality, and -1 means 2x duration -> 0 mortality (so there a lower bound of -1).
+params$duration_cv <- c(0.5,0.25, 1) # we will simulate gamma distribution of durations, with this coefficient of variation
 
+params$duration_tbdeath_covarying_cv <- c(-0.5, -1, 0) # in the direction of correlation, how spread is tbdeath risk relative to duration (and is the correlation positive or negative). A value of 1 or -1 means positive or negative corelations, respectively, with the average mortaity at a given duration equal to the duration. Less than 1 means less spread, >1 means more spread than duration. 
+params$duration_transmission_covarying_cv <- c(1, 0.5, 1.5)
 
-params$duration_transmission_multiplier <- c(1, 0.5, 1.5) # Relationship between of total duration (in absence of ACF) and total transmission = 1?
 
 paramdf <- as.data.frame(t(as.data.frame(params)))
 colnames(paramdf) <- c("mid","low","high")

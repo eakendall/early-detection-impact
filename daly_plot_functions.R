@@ -187,7 +187,7 @@ plot_time_course <- function(estimates=midpoint_estimates)
 
 
 plot_heterogeneity <- function(estimates = midpoint_estimates,
-                              N = 1000) # fewer than in quantitative function
+                              N = 500) # just for visualization, too few for stable estimates
 {
   qs <- runif(N, 0, 1)
 
@@ -196,17 +196,16 @@ plot_heterogeneity <- function(estimates = midpoint_estimates,
                                 scale=(solve_for_gamma_parameters(mean=1, sd=estimates$duration_cv))[['scale']])
     
    # and for each, get the corresponding relative-DALY multipliers for mortality and transmission:
-   # unlike when I was averaging, I should include some noise here
-  relative_dalys_mortality <- qgamma(p = `if`(estimates$duration_tbdeath_multiplier>0, qs, 1-qs),  
-                                    shape=(solve_for_gamma_parameters(mean=1, sd=estimates$duration_cv*abs(estimates$duration_tbdeath_multiplier)))[['shape']], 
-                                      scale=(solve_for_gamma_parameters(mean=1, sd=estimates$duration_cv*abs(estimates$duration_tbdeath_multiplier)))[['scale']])
+  relative_dalys_mortality <- qgamma(p = `if`(estimates$duration_tbdeath_covarying_cv >0, qs, 1-qs),  
+                                    shape=(solve_for_gamma_parameters(mean=1, sd=estimates$duration_cv*abs(estimates$duration_tbdeath_covarying_cv)))[['shape']], 
+                                      scale=(solve_for_gamma_parameters(mean=1, sd=estimates$duration_cv*abs(estimates$duration_tbdeath_covarying_cv)))[['scale']])
   relative_dalys_mortality_withnoise <- 
       rnorm(N, mean=relative_dalys_mortality, sd=0.2*relative_dalys_mortality)
   
-  relative_dalys_transmission <- qgamma(p = `if`(estimates$duration_transmission_multiplier>0, qs, 1-qs), 
-                                        shape=(solve_for_gamma_parameters(mean=1, sd=estimates$duration_cv*abs(estimates$duration_transmission_multiplier)))[['shape']],
+  relative_dalys_transmission <- qgamma(p = `if`(estimates$duration_transmission_covarying_cv>0, qs, 1-qs), 
+                                        shape=(solve_for_gamma_parameters(mean=1, sd=estimates$duration_cv*abs(estimates$duration_transmission_covarying_cv)))[['shape']],
                                         scale=(solve_for_gamma_parameters(mean=1, sd=estimates$duration_cv*abs
-                                        (estimates$duration_transmission_multiplier)))[['scale']]) 
+                                        (estimates$duration_transmission_covarying_cv)))[['scale']]) 
   relative_dalys_transmission_withnoise <- 
       rnorm(N, mean=relative_dalys_transmission, sd=0.2*relative_dalys_transmission)
     
