@@ -35,7 +35,6 @@ dalys_per_average_case <- function(estimates = midpoint_estimates, plot = FALSE)
   })
 }
 
-
 ####  Time weighting of DALYs within a case --> proportion avertible through early detection ####
 # Of the symptoms, mortality risk, and sequelae accrual of a given case, (and then the same for transmission,)
 # what proportion can't be prevented through screening because it occurs before they're detectable or after they're routinly diagnoses,
@@ -60,10 +59,10 @@ within_case_avertible <- function(estimates = midpoint_estimates)
 
 
 
-within_case_cumulative_and_averted <- function(estimates = midpoint_estimates)
+within_case_cumulative_and_averted <- function(averages = NULL, proportions = NULL, estimates = midpoint_estimates)
 {
-  averages <- dalys_per_average_case(estimates)
-  proportions <- within_case_avertible(estimates)
+  if(missing(averages)) averages <- dalys_per_average_case(estimates)
+  if(missing(proportions)) proportions <- within_case_avertible(estimates)
   averages_and_avertibles <- rbind(averages, 
                                    averages %>%
              mutate(cumulative_or_averted = "averted",
@@ -116,14 +115,18 @@ between_case_differences <- function(estimates = midpoint_estimates)
 }
 
 #### Put it all together #####
-daly_estimator <- function(estimates = midpoint_estimates)
+daly_estimator <- function(within_case = NULL, 
+                            between_case = NULL, 
+                            estimates = midpoint_estimates)
 {
+  if(missing(within_case)) within_case <- within_case_cumulative_and_averted(estimates=estimates)
+  if(missing(between_case)) between_case <- between_case_differences(estimates=estimates)
   
-  cumulativerows <- within_case_cumulative_and_averted(estimates) 
-  detectedrows <- within_case_cumulative_and_averted(estimates) %>% mutate(
+  cumulativerows <- within_case
+  detectedrows <- within_case %>% mutate(
     average_or_detected = "detected",
-    value = value * case_when(name=="transmission" ~ between_case_differences(estimates)$avertible_transmission_multiplier_detected,
-                              name=="mortality"~ between_case_differences(estimates)$avertible_mortality_multiplier_detected,
+    value = value * case_when(name=="transmission" ~ between_case$avertible_transmission_multiplier_detected,
+                              name=="mortality"~ between_case$avertible_mortality_multiplier_detected,
                               TRUE ~ 1))
   
   return(rbind(cumulativerows, detectedrows))

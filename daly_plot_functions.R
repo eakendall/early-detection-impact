@@ -5,12 +5,16 @@ library(gridExtra)
 library(kableExtra)
 
 
-plot_averages <- function(output, number_labels = TRUE)
+plot_averages <- function(output_dalys_per_average_case = NULL, 
+                          input_first_block = midpoint_estimates, 
+                          number_labels = TRUE)
 {
  
-  if(missing(output)) output <- dalys_per_average_case()
+  if(missing(output_dalys_per_average_case)) 
+    output_dalys_per_average_case <- dalys_per_average_case()
    
-  plot <- ggplot(output %>% filter(cumulative_or_averted == "cumulative",
+  plot <- ggplot(output_dalys_per_average_case %>% 
+                   filter(cumulative_or_averted == "cumulative",
                                    average_or_detected == "average")  %>% 
                    mutate(component = case_when(str_detect(name, "mortality") ~ "TB Mortality",
                                                 str_detect(name, "morbidity") ~ "TB Morbidity",
@@ -37,13 +41,13 @@ plot_averages <- function(output, number_labels = TRUE)
 
 # plot_averages()
 
-plot_detectable_proportion <- function(totals_plot, estimates=midpoint_estimates)
+plot_detectable_proportion <- function(averages_plot, estimates=midpoint_estimates)
 {
   if(missing(totals_plot)) totals_plot <- plot_averages(dalys_per_average_case(estimates), number_labels = F)
   
   with(estimates, {
     detectable_period_plot <- 
-      totals_plot + geom_rect(aes(xmin=0.5, xmax=0.5 + predetection_mm, ymin=0, 
+      averages_plot + geom_rect(aes(xmin=0.5, xmax=0.5 + predetection_mm, ymin=0, 
                                   ymax= sum(totals_plot$data %>% filter(name!="transmission") %>% select(value))), 
                               fill="gray", alpha=0.3) + 
       geom_rect(aes(xmin=0.5, xmax= 0.5 + predetection_transmission,
@@ -68,21 +72,20 @@ plot_detectable_proportion <- function(totals_plot, estimates=midpoint_estimates
 
 # plot_detectable_proportion()
 
-plot_time_course <- function(estimates=midpoint_estimates)
+plot_time_course <- function(within_case = NULL, estimates = midpoint_estimates)
 {
-  proportions <- within_case_avertible(estimates) 
-  averages_and_avertibles <- within_case_cumulative_and_averted(estimates)
+  if(missing(within_case)) within_case <- within_case_cumulative_and_averted(estimates=estimates)
 
-  plotdata <- rbind(averages_and_avertibles,
-                    averages_and_avertibles %>% filter(cumulative_or_averted=="cumulative") %>%
+  plotdata <- rbind(within_case,
+                    within_case %>% filter(cumulative_or_averted=="cumulative") %>%
                       mutate(cumulative_or_averted="detectable",
                              value = value*case_when(name=="transmission" ~ (1-estimates$predetection_transmission -    estimates$postrx_transmission),
                                                      TRUE ~ (1-estimates$predetection_mm - estimates$postrx_mm))),
-                    averages_and_avertibles %>% filter(cumulative_or_averted=="cumulative") %>%
+                    within_case %>% filter(cumulative_or_averted=="cumulative") %>%
                       mutate(cumulative_or_averted="pre",
                              value = value*case_when(name=="transmission" ~ estimates$predetection_transmission,
                                                      TRUE ~ estimates$predetection_mm)),
-                    averages_and_avertibles %>% filter(cumulative_or_averted=="cumulative") %>%
+                    within_case %>% filter(cumulative_or_averted=="cumulative") %>%
                       mutate(cumulative_or_averted="post",
                              value = value*case_when(name=="transmission" ~ estimates$postrx_transmission,
                                                      TRUE ~ estimates$postrx_mm)))
