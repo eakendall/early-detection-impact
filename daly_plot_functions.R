@@ -224,10 +224,10 @@ plot_heterogeneity <- function(estimates = midpoint_estimates,
     qgamma(p = qs_mort,
            shape=(solve_for_gamma_parameters(
                     mean = 1,
-                    sd = estimates$duration_cv*abs(estimates$duration_tbdeath_covarying_cv)))[['shape']],
+                    sd = estimates$duration_cv * abs(estimates$duration_tbdeath_covarying_cv)))[['shape']],
            scale=(solve_for_gamma_parameters(
                     mean = 1,
-                    sd = estimates$duration_cv*abs(estimates$duration_tbdeath_covarying_cv)))[['scale']])
+                    sd = estimates$duration_cv * abs(estimates$duration_tbdeath_covarying_cv)))[['scale']])
   relative_dalys_mortality_withnoise <-
       rnorm(N, mean = relative_dalys_mortality, sd = 0.2 * relative_dalys_mortality)
   
@@ -259,7 +259,7 @@ figure3 <- ggplot(as_tibble(cbind(relative_durations, relative_dalys_transmissio
   geom_point(aes(x=relative_durations, y=relative_dalys_transmission_withnoise), alpha=0.5) +
   xlim(0, quantile(relative_durations, 0.999)) +
   theme_minimal() +
-  labs(x = "Relative duration \n(= relative P(detection))", y = "Relative DALYs\nfrom transmission") +
+  labs(x = "Relative duration \n(= relative probability of detection during ACF))", y = "Relative DALYs\nfrom transmission") +
   theme(plot.margin = margin(10, 10, 10, 10))
 
 # Arrange the three figures in a column

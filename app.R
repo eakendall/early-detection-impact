@@ -144,17 +144,17 @@ tags$head(
         plotOutput("heterogeneity_plot")
       )
     )
+  ),
+  tabPanel("Results - DALYs averted per case detected",
+    fluidRow(
+      column(width = 6,
+        plotOutput("averted_plot")
+      ),
+      column(width = 6,
+        tableOutput("results_table")
+      )
+    )
   )
-  # tabPanel("Results",
-  #   fluidRow(
-  #     column(width = 6,
-  #       plotOutput("averted_plot")
-  #     ),
-  #     column(width = 12,
-  #       tableOutput("results_table")
-  #     )
-  #   )
-  # )
 )
 
 
@@ -202,27 +202,24 @@ server <- function(input, output) {
 
   # Define the intermediate reactive functions
   averages <- reactive(dalys_per_average_case(sliderValues1()))
-  proportions <- reactive(within_case_avertible(sliderValues2()))
+  proportions_reactive <- reactive(within_case_avertible(sliderValues2()))
   
   within_case <- reactive(within_case_cumulative_and_averted(
     averages = averages(),
-    proportions = proportions()))
+    proportions = proportions_reactive()))
   
-  between_case <- reactive(between_case_differences(sliderValues3))
+  between_case <- reactive(between_case_differences(estimates = sliderValues3()))
 
   dalys_averted_per_case_detected <- reactive(
-    dalys_averted_per_case_detected(within_case = within_case(),
-                                    between_case = between_case()))
-
-  # output$results_table = renderTable({
-  #   as.data.frame(dalys_averted_per_case_detected())
-  # })
+    daly_estimator(within_case = within_case(),
+                   between_case = between_case()))
 
   # plot functions depend on corresponding functions' outputs:
   averages_plot_reactive <- reactive(
     plot_averages(output_dalys_per_average_case = averages()))
 
   output$averages_plot <- renderPlot(averages_plot_reactive())
+
   output$proportions_plot = renderPlot(
     plot_detectable_proportion(averages_plot = averages_plot_reactive(),
                                estimates = sliderValues2()))
@@ -234,10 +231,12 @@ server <- function(input, output) {
   output$heterogeneity_plot <- renderPlot(
     plot_heterogeneity(estimates = sliderValues3()))
 
-  # output$averted_plot <- renderPlot(
-  #   plot_averted(dalys_averted_per_case_detected()))
+  output$averted_plot <- renderPlot(
+    plot_averted(dalys_averted_per_case_detected()))
 
-
+  output$results_table <- renderTable({
+    as.data.frame(dalys_averted_per_case_detected())
+  })
 }
 
 # call the shiny app ----

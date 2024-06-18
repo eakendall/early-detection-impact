@@ -78,7 +78,6 @@ within_case_cumulative_and_averted <- function(averages = NULL, proportions = NU
 #### Differences between detected and not detected cases ####
 between_case_differences <- function(estimates = midpoint_estimates)
 {
-
   # estimates$duration_tbdeath_covarying_cv = (covariance / duration_cv) assuming correlation of 1
   covariance_mortality_duration <- estimates$duration_tbdeath_covarying_cv * estimates$duration_cv
   covariance_transmission_duration <- estimates$duration_transmission_covarying_cv * estimates$duration_cv
@@ -95,25 +94,25 @@ between_case_differences <- function(estimates = midpoint_estimates)
   # integral dD dT f D T = cov(D,T) + 1. 
 
   # So we can just use the covariance plus 1 as the expected value of T when sampling by D.
-  
+
   return(list(
     "avertible_mortality_multiplier_detected" = covariance_mortality_duration + 1,
     "avertible_transmission_multiplier_detected" = covariance_transmission_duration + 1))
 }
 
 #### Put it all together #####
-daly_estimator <- function(within_case = NULL, 
-                            between_case = NULL, 
-                            estimates = midpoint_estimates)
+daly_estimator <- function(within_case = NULL,
+                           between_case = NULL,
+                           estimates = midpoint_estimates)
 {
-  if(missing(within_case)) within_case <- within_case_cumulative_and_averted(estimates=estimates)
-  if(missing(between_case)) between_case <- between_case_differences(estimates=estimates)
+  if (missing(within_case)) within_case <- within_case_cumulative_and_averted(estimates = estimates)
+  if (missing(between_case)) between_case <- between_case_differences(estimates = estimates)
   
   cumulativerows <- within_case
   detectedrows <- within_case %>% mutate(
     average_or_detected = "detected",
-    value = value * case_when(name=="transmission" ~ between_case$avertible_transmission_multiplier_detected,
-                              name=="mortality"~ between_case$avertible_mortality_multiplier_detected,
+    value = value * case_when(name == "transmission" ~ between_case$avertible_transmission_multiplier_detected,
+                              name == "mortality" ~ between_case$avertible_mortality_multiplier_detected,
                               TRUE ~ 1))
   
   return(rbind(cumulativerows, detectedrows))
