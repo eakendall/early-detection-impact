@@ -275,18 +275,18 @@ return(grid.arrange(figure1, figure2, figure3, ncol=1))
 
 output_table <- function(output)
 {
-  if(missing(output)) output <- daly_estimator() 
+  if (missing(output)) output <- daly_estimator()
 
   outputtable <- output %>% 
-    pivot_wider(names_from = cumulative_or_averted, values_from = value) %>% 
-    pivot_wider(names_from = average_or_detected, values_from = c(cumulative, averted)) %>% 
-    mutate_if(is.numeric, format, digits=3) %>%
+    pivot_wider(names_from = cumulative_or_averted, values_from = value) %>%
+    pivot_wider(names_from = average_or_detected, values_from = c(cumulative, averted)) %>%
     mutate(name = str_to_title(name)) %>%
     kable(., format = "html",
-          col.names=c("Source of DALYs", rep(c("Average incident case", "Average detected case"), times=2))) %>%
+          col.names=c("Source", rep(c("Average incident case", "Average detected case"), times = 2)),
+          digits = 2) %>%
     kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE) %>%
     add_header_above(., header =
-      c(" " = 1, "Cumulative DALYs" = 2, "Averted by early detection" = 2))
+      c(" " = 1, "Total cumulative DALYs per case" = 2, "Averted by early detection" = 2))
 
 return(outputtable)
 }

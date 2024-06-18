@@ -12,14 +12,14 @@ params$tb_death_yearslost <- c(20,10,35)
 params$discounting_rate <- c(0.05,0.03,0.07)
 
 ## Sequelae
-params$posttb_symptom_duration <- c(25,10,35)
-params$posttb_symptom_dw <- c(0.1, 0.05, 0.2)
+params$posttb_symptom_duration <- c(10,2,35) # not total survival time, but time spent with symptoms
+params$posttb_symptom_dw <- c(0.15, 0.05, 0.5) # disability weight during symptoms
 params$posttb_cfr <- c(0.05, 0.02, 0.10) # look at menzies paper
 params$posttb_death_timing <- c(5,1,10) #mean years to death, for those who die early of post-TB sequelae
-params$posttb_death_yearslost <- c(15,10,30) 
+params$posttb_death_yearslost <- c(15, 10, 30)
 
 # Transmission
-params$downstream_cases <- c(0.8, 0.5, 3) # should already be adjusted for temporal discounting
+params$downstream_cases <- c(0.8, 0.5, 3) # should already be adjusted for temporal discounting. Estimated from Shrestha et al Step change model with one symptomatic or asympatomic case removed at present day. 
 
 
 # Second block of params, needed for time course

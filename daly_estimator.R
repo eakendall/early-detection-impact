@@ -112,7 +112,7 @@ daly_estimator <- function(within_case = NULL,
   detectedrows <- within_case %>% mutate(
     average_or_detected = "detected",
     value = value * case_when(name == "transmission" ~ between_case$avertible_transmission_multiplier_detected,
-                              name == "mortality" ~ between_case$avertible_mortality_multiplier_detected,
+                              name == "mortality"~ between_case$avertible_mortality_multiplier_detected,
                               TRUE ~ 1))
   
   return(rbind(cumulativerows, detectedrows))

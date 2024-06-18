@@ -37,8 +37,12 @@ tags$head(
       .irs-min {font-family: 'arial'; color: black;}
       .irs-single {color:black; background:#6666ff;}
       .irs-slider {width: 30px; height: 30px; top: 22px;}
-    "))
-  ),
+    ")),
+    tags$style('body {
+      font-family: Arial; 
+      font-size: 12px; 
+      font-style: italic; }'
+    )),
 
   # organize as 4 navbarPages, for the three input sections plus the final results
   tabPanel("Total DALYs per average TB case",
@@ -60,10 +64,10 @@ tags$head(
           ),
           accordion_panel(
             title = "Sequelae",
-            slider_input_from_file("posttb_symptom_duration", "Time lived post-TB (years)"),
+            slider_input_from_file("posttb_symptom_duration", "Time lived with TB sequelae (years)"),
             slider_input_from_file("posttb_symptom_dw", "Disability weight during TB sequelae", step = 0.02),
             slider_input_from_file("posttb_cfr", "Post-TB fatality ratio 
-                                  (proportion who die early of TB sequelae)", step = 0.01),
+                                  (proportion of all TB survivors who die early of TB sequelae)", step = 0.01),
             slider_input_from_file("posttb_death_yearslost",
                                   "Years of life lost per death from TB sequelae"),
             slider_input_from_file("posttb_death_timing", "Mean time to death from TB sequelae (years)")
@@ -120,8 +124,14 @@ tags$head(
         )
       ),
       mainPanel(
-        plotOutput("proportions_plot"),
-        plotOutput("time_course_plot")
+        fluidRow(
+          column(width = 6,
+            plotOutput("proportions_plot")
+          ),
+          column(width = 6,
+            plotOutput("time_course_plot")
+          )
+        )
       )
     )
   ),
@@ -141,17 +151,17 @@ tags$head(
         )
       ),
       mainPanel(
-        plotOutput("heterogeneity_plot")
+        plotOutput("heterogeneity_plot", height = "600px")
       )
     )
   ),
   tabPanel("Results - DALYs averted per case detected",
     fluidRow(
-      column(width = 6,
+      column(width = 4,
         plotOutput("averted_plot")
       ),
-      column(width = 6,
-        tableOutput("results_table")
+      column(width = 8,
+        htmlOutput("results_table") # kable (html) table
       )
     )
   )
@@ -229,13 +239,13 @@ server <- function(input, output) {
                      estimates = sliderValues2()))
 
   output$heterogeneity_plot <- renderPlot(
-    plot_heterogeneity(estimates = sliderValues3()))
+    {plot_heterogeneity(estimates = sliderValues3())}, height = 600)
 
   output$averted_plot <- renderPlot(
     plot_averted(dalys_averted_per_case_detected()))
 
-  output$results_table <- renderTable({
-    as.data.frame(dalys_averted_per_case_detected())
+  output$results_table <- renderText({
+    output_table(dalys_averted_per_case_detected())
   })
 }
 
