@@ -73,20 +73,7 @@ within_case_cumulative_and_averted <- function(averages = NULL, proportions = NU
   
 }
 
-# # Utility function because we'll need to get the mu and sigma parameters for lognormal distributions with a desired mean and sd:
-# solve_for_log_normal_parameters <- function(mean, sd)
-# {  sigma2 = log(sd^2/mean^2 + 1)
-# mu = log(mean) - sigma2/2
-# return(list("mu"=mu, "sigma2"=sigma2))
-# }
 
-# Gamma distribution version of the above function: for specified sd and mean,  get the shape and scale parameters. Will use later for plotting only (if at all)
-solve_for_gamma_parameters <- function(mean, sd)
-{
-  shape = mean^2/sd^2
-  scale = sd^2/mean
-  return(list("shape"=shape, "scale"=scale))
-}
 
 #### Differences between detected and not detected cases ####
 between_case_differences <- function(estimates = midpoint_estimates)

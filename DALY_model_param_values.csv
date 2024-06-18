@@ -15,7 +15,7 @@
 "resolving_detectable",0.2,0.1,0.3,"resolving_detectable"
 "predetection_mm",0.1,0,0.3,"predetection_mm"
 "predetection_transmission",0.05,0,0.1,"predetection_transmission"
-"postrx_mm",0.25,0,1,"postrx_mm"
+"postrx_mm",0.25,0,0.8,"postrx_mm"
 "postrx_transmission",0.1,0,0.5,"postrx_transmission"
 "duration_cv",0.5,0.25,1,"duration_cv"
 "duration_tbdeath_covarying_cv",-0.5,-1,0,"duration_tbdeath_covarying_cv"

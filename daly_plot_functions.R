@@ -1,4 +1,5 @@
 
+setwd("~/Google Drive/My Drive/DALY impact of ACF 2024/ACF-impact-Rshiny/")
 source("daly_estimator.R")
 
 library(gridExtra)
@@ -29,39 +30,39 @@ plot_averages <- function(output_dalys_per_average_case = NULL,
           panel.grid.major.x = element_blank(),
           panel.grid.minor.x = element_blank(),
           axis.text.y = element_text(size = 14),
-          plot.title = element_text(size = 14))
+          plot.title = element_text(size = 16))
     
   
   if (number_labels) plot <- plot + geom_text(aes(label = paste0  (ordered_component, ", ",round(value,2))),
-                                              position = position_stack(vjust = .5)) else
-                                                plot <- plot + geom_text(aes(label = ordered_component),
+                                              position = position_stack(vjust = .5), size=5) else
+                                                plot <- plot + geom_text(aes(label = ordered_component),  
                                                                          position = position_stack(vjust = .5),
-                                                                         size = 16)
+                                                                         size = 5)
                                               
  return(plot)
 }
 
 plot_detectable_proportion <- function(averages_plot, estimates=midpoint_estimates)
 {
-  if(missing(totals_plot)) totals_plot <- plot_averages(dalys_per_average_case(estimates), number_labels = F)
+  if(missing(averages_plot)) averages_plot <- plot_averages(dalys_per_average_case(estimates), number_labels = F)
   
   with(estimates, {
     detectable_period_plot <- 
       averages_plot + geom_rect(aes(xmin=0.5, xmax=0.5 + predetection_mm, ymin=0, 
-                                  ymax= sum(totals_plot$data %>% filter(name!="transmission") %>% select(value))), 
+                                  ymax= sum(averages_plot$data %>% filter(name!="transmission") %>% select(value))), 
                               fill="gray", alpha=0.3) + 
       geom_rect(aes(xmin=0.5, xmax= 0.5 + predetection_transmission,
-                    ymin= sum(totals_plot$data %>% filter(name!="transmission") %>% select(value))), 
-                ymax= sum(totals_plot$data %>% select(value)), 
+                    ymin= sum(averages_plot$data %>% filter(name!="transmission") %>% select(value))), 
+                ymax= sum(averages_plot$data %>% select(value)), 
                 fill="gray", alpha=0.3) + 
       annotate(geom="text", x=0.5 + predetection_mm/2, y=0.1, 
                label="Accrues before detectability", angle=90, hjust=0) +
       geom_rect(aes(xmin=1.5 - postrx_mm, xmax=1.5, ymin=0, 
-                    ymax= sum(totals_plot$data %>% filter(name!="transmission") %>% select(value))), 
+                    ymax= sum(averages_plot$data %>% filter(name!="transmission") %>% select(value))), 
                 fill="gray", alpha=0.3) + 
       geom_rect(aes(xmin=1.5 - postrx_transmission, xmax= 1.5,
-                    ymin= sum(totals_plot$data %>% filter(name!="transmission") %>% select(value))), 
-                ymax= sum(totals_plot$data %>% select(value)), 
+                    ymin= sum(averages_plot$data %>% filter(name!="transmission") %>% select(value))), 
+                ymax= sum(averages_plot$data %>% select(value)), 
                 fill="gray", alpha=0.3) + 
       annotate(geom="text", x=1.5 - postrx_mm/2, y=0.1, 
                label="Accrues after routine diagnosis", angle=90, hjust=0) + 
@@ -74,7 +75,7 @@ plot_detectable_proportion <- function(averages_plot, estimates=midpoint_estimat
 
 plot_time_course <- function(within_case = NULL, estimates = midpoint_estimates)
 {
-  if(missing(within_case)) within_case <- within_case_cumulative_and_averted(estimates=estimates)
+  if(missing(within_case)) within_case <- within_case_cumulative_and_averted(estimates = estimates)
 
   plotdata <- rbind(within_case,
                     within_case %>% filter(cumulative_or_averted=="cumulative") %>%
@@ -135,10 +136,10 @@ plot_time_course <- function(within_case = NULL, estimates = midpoint_estimates)
   
   rect_points <- rect_points %>% mutate(y1=0,
                                         y3=unlist(c(h1_transmission, h1_mm, h1_mm, h1_mm)*
-                                                    (averages_and_avertibles %>% filter(cumulative_or_averted=="cumulative") %>% 
+                                                    (within_case %>% filter(cumulative_or_averted=="cumulative") %>% 
                                                      arrange(match(name, rect_points$component)) %>% select(value))),
                                         y4= unlist(c(h2_transmission, h2_mm, h2_mm, h2_mm)*
-                                                     (averages_and_avertibles %>% filter(cumulative_or_averted=="cumulative") %>% 
+                                                     (within_case %>% filter(cumulative_or_averted=="cumulative") %>% 
                                                         arrange(match(name, rect_points$component)) %>% select(value))),
                                         y6=0,
                                         y7=0, y8=0, y9=0, y10=0) %>%
@@ -157,25 +158,36 @@ plot_time_course <- function(within_case = NULL, estimates = midpoint_estimates)
   rect_points_stacked <- rect_points %>% mutate(y2 = cumsum(y2), y3 = cumsum(y3), y4 = cumsum(y4), y5 = cumsum(y5)) %>%
                                           mutate(y7 = c(0, y5[1:3]), y8 = c(0, y4[1:3]), y9 = c(0, y3[1:3]), y10 = c(0, y2[1:3]))
 
-    
-  toplot <- rect_points_stacked %>% pivot_longer(-component, 
-               names_to = c(".value","id"), 
-               names_pattern = "(\\D)(\\d+)" )
-  
+  toplot <- rect_points_stacked %>%
+    pivot_longer(-component,
+                 names_to = c(".value", "id"),
+                 names_pattern = "(\\D)(\\d+)") %>%
+    mutate(component = factor(component, levels = rev(c("morbidity","mortality", "sequelae", "transmission"))))
 
-  time_course_plot <- ggplot(data = toplot) + 
-    geom_polygon(aes(x=x, y=y, group=component, fill=component)) + 
-    xlab("Time (arbitrary scale)") + 
-    ylab ("DALY accrual rate (arbitrary scale)") + 
-    scale_x_discrete(labels = NULL, breaks = NULL) + 
-    scale_y_discrete(labels = NULL, breaks = NULL) + 
-    theme_minimal() + 
-    geom_rect(data=rect_points_stacked, aes(xmin=min(x1), xmax=max(x3), ymin=0, ymax=max(y4)), fill="gray", alpha=0.3)+ 
-    geom_rect(data=rect_points_stacked, aes(xmin=min(x4), xmax=max(x6), ymin=0, ymax=max(y4)), fill="gray", alpha=0.3) +
-    geom_vline(xintercept = -1, linetype=2) + geom_vline(xintercept = 1, linetype=2) + 
-    annotate(geom = "text", x= (min(rect_points_stacked$x1)-1)/2, y=max(rect_points_stacked$y4)/2, label="before detectability", angle=90) + 
-    annotate(geom = "text", x= (max(rect_points_stacked$x6)+1)/2, y=max(rect_points_stacked$y4)/2, label="after routine detection", angle=90)
+  time_course_plot <- ggplot(data = toplot) +
+    geom_polygon(aes(x = x, y = y, group = component, fill = component)) +
+    scale_fill_discrete(breaks = rev(levels(toplot$component))) +
+    xlab("Time (arbitrary scale)") +
+    ylab("DALY accrual rate (arbitrary scale)") +
+    scale_x_discrete(labels = NULL, breaks = NULL) +
+    scale_y_discrete(labels = NULL, breaks = NULL) +
+    theme_minimal() +
+    geom_rect(data = rect_points_stacked, aes(xmin = min(x1), xmax = max(x3), ymin = 0, ymax = max(y4)),
+              fill = "gray", alpha = 0.3) +
+    geom_rect(data = rect_points_stacked, aes(xmin = min(x4), xmax = max(x6), ymin = 0, ymax = max(y4)),
+              fill = "gray", alpha = 0.3) +
+    geom_vline(xintercept = -1, linetype = 2) + geom_vline(xintercept = 1, linetype=2) +
+    annotate(geom = "text", x = (min(rect_points_stacked$x1) - 1) / 2, y = max(rect_points_stacked$y4) / 2,
+             label = "before detectability", angle = 90) +
+    annotate(geom = "text", x = (max(rect_points_stacked$x6) + 1) / 2, y = max(rect_points_stacked$y4) / 2,
+             label = "after routine detection", angle = 90) +
+    guides(fill = guide_legend(reverse = TRUE)) +
+    ggtitle("Timing of DALY accrual") +
+    theme(axis.text = element_text(size = 14),
+          plot.title = element_text(size = 16))
 
+
+      
     return(time_course_plot)
 }
 
@@ -188,29 +200,46 @@ plot_time_course <- function(within_case = NULL, estimates = midpoint_estimates)
 # and then scatted plots showign the relationship between this duration and the 
 # corresponding relative contributions to transmission and mortality. 
 
+# Utility function: Gamma distribution version of the above function: for specified sd and mean,  get the shape and scale parameters.
+solve_for_gamma_parameters <- function(mean, sd)
+{
+  shape <- mean^2 / sd^2
+  scale <- sd^2 / mean
+  return(list("shape" = shape, "scale" = scale))
+}
 
 plot_heterogeneity <- function(estimates = midpoint_estimates,
-                              N = 500) # just for visualization, too few for stable estimates
+                               N = 500) # just for visualization, too few for stable estimates
 {
-  qs <- runif(N, 0, 1)
-
-  relative_durations <-  qgamma(p=qs, 
-                                shape=(solve_for_gamma_parameters(mean=1, sd=estimates$duration_cv))[['shape']], 
-                                scale=(solve_for_gamma_parameters(mean=1, sd=estimates$duration_cv))[['scale']])
-    
-   # and for each, get the corresponding relative-DALY multipliers for mortality and transmission:
-  relative_dalys_mortality <- qgamma(p = `if`(estimates$duration_tbdeath_covarying_cv >0, qs, 1-qs),  
-                                    shape=(solve_for_gamma_parameters(mean=1, sd=estimates$duration_cv*abs(estimates$duration_tbdeath_covarying_cv)))[['shape']], 
-                                      scale=(solve_for_gamma_parameters(mean=1, sd=estimates$duration_cv*abs(estimates$duration_tbdeath_covarying_cv)))[['scale']])
-  relative_dalys_mortality_withnoise <- 
-      rnorm(N, mean=relative_dalys_mortality, sd=0.2*relative_dalys_mortality)
   
-  relative_dalys_transmission <- qgamma(p = `if`(estimates$duration_transmission_covarying_cv>0, qs, 1-qs), 
+  browser()
+  
+  qs <- runif(N, 0, 1)
+  qs_mort <- qs_trans <- qs
+  if (estimates$duration_tbdeath_covarying_cv < 0) qs_mort <- 1 - qs
+  if (estimates$duration_transmission_covarying_cv < 0) qs_trans <- 1 - qs
+
+  relative_durations <-  qgamma(p = qs,
+                                shape = (solve_for_gamma_parameters(mean = 1, sd = estimates$duration_cv))[['shape']],
+                                scale = (solve_for_gamma_parameters(mean = 1, sd = estimates$duration_cv))[['scale']])
+    
+  relative_dalys_mortality <-
+    qgamma(p = qs_mort,
+           shape=(solve_for_gamma_parameters(
+                    mean = 1,
+                    sd = estimates$duration_cv*abs(estimates$duration_tbdeath_covarying_cv)))[['shape']],
+           scale=(solve_for_gamma_parameters(
+                    mean = 1,
+                    sd = estimates$duration_cv*abs(estimates$duration_tbdeath_covarying_cv)))[['scale']])
+  relative_dalys_mortality_withnoise <-
+      rnorm(N, mean = relative_dalys_mortality, sd = 0.2 * relative_dalys_mortality)
+  
+  relative_dalys_transmission <- qgamma(p = qs_trans,
                                         shape=(solve_for_gamma_parameters(mean=1, sd=estimates$duration_cv*abs(estimates$duration_transmission_covarying_cv)))[['shape']],
                                         scale=(solve_for_gamma_parameters(mean=1, sd=estimates$duration_cv*abs
                                         (estimates$duration_transmission_covarying_cv)))[['scale']]) 
   relative_dalys_transmission_withnoise <- 
-      rnorm(N, mean=relative_dalys_transmission, sd=0.2*relative_dalys_transmission)
+      rnorm(N, mean = relative_dalys_transmission, sd = 0.2 * relative_dalys_transmission)
     
 # Start first of three ggplot figures to be arranged in a column of panels
 figure1 <- ggplot(as_tibble(relative_durations)) + 

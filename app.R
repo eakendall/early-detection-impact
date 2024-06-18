@@ -1,5 +1,4 @@
 # setwd("./Google Drive//My Drive//DALY impact of ACF 2024/ACF-impact-Rshiny/")
-
 library(shiny)
 library(bslib)
 library(bsplus)
@@ -24,7 +23,7 @@ slider_input_from_file <- function(id, label, paramtable = paramdf, step = NULL)
 .boot_dep <- "https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.0.0/css/bootstrap.min.css"
 
 ui <- bslib::page_navbar( 
-  title = "ACF Impact", # see https://stackoverflow.com/questions/64739973/can-i-make-the-navbar-title-into-its-own-clickable-page-in-shiny for how to enlarge
+  title = "ACF Impact",
 
 # change font sizes/formatting of all sliders
 tags$head(
@@ -40,7 +39,6 @@ tags$head(
       .irs-slider {width: 30px; height: 30px; top: 22px;}
     "))
   ),
-
 
   # organize as 4 navbarPages, for the three input sections plus the final results
   tabPanel("Total DALYs per average TB case",
@@ -87,63 +85,66 @@ tags$head(
         plotOutput("averages_plot"),
       )
     )
+  ),
+  tabPanel("Timing of DALY accrual",
+    sidebarLayout(
+      sidebarPanel(
+        accordion(
+          accordion_panel("Accrual before detectability",
+            slider_input_from_file("predetection_mm",
+                                   "Proportion of morbidity and mortality that accrue 
+                                   before TB becomes detectable by screening algorithm"),
+            slider_input_from_file("predetection_transmission",
+                                   "Proportion of transmission that occurs 
+                                   before TB becomes detectable by screening algorithm")
+          ),
+          accordion_panel("Accrual after routine diagnosis",
+            slider_input_from_file("postrx_mm",
+                                   "Proportion of morbidity and mortality that accrue 
+                                   after routine detection"),
+            slider_input_from_file("postrx_transmission",
+                                   "Proportion of transmission that occurs 
+                                   after routine detection")
+          ),
+          accordion_panel("Timing within detectable period",
+            slider_input_from_file("second_half_vs_first_mm",
+                                   "Of personal DALYs that accrue during detectable period, 
+                                   proportion in 2nd half"),
+            slider_input_from_file("second_half_vs_first_transmission",
+                                   "Of transmission that occurs during detectable period, 
+                                   proportion in 2nd half"),
+            slider_input_from_file("resolving_detectable",
+                                   "Proportion of TB that will spontaneously resolve 
+                                   after becoming detectable")
+          )
+        )
+      ),
+      mainPanel(
+        plotOutput("proportions_plot"),
+        plotOutput("time_course_plot")
+      )
+    )
+  ),
+  tabPanel("Average vs detected cases",
+    sidebarLayout(
+      sidebarPanel(
+        accordion(
+          accordion_panel("Variance in disease duration",
+            slider_input_from_file("duration_cv", "Coefficient of variation in TB duration (in absence of ACF)")
+          ),
+          accordion_panel("Covariance with duration",
+            slider_input_from_file("duration_tbdeath_covarying_cv",
+                               "How mortality risk co-varies with duration"),
+            slider_input_from_file("duration_transmission_covarying_cv",
+                               "How cumulative transmission co-varies with duration")
+          )
+        )
+      ),
+      mainPanel(
+        plotOutput("heterogeneity_plot")
+      )
+    )
   )
-  # tabPanel("Timing of DALY accrual",
-  #   sidebarLayout(
-  #     sidebarPanel(
-  #       accordion(
-  #         accordion_panel("Timing within detectable period",
-  #           slider_input_from_file("second_half_vs_first_mm",
-  #                                 "Of personal DALYs that accrue during detectable period, 
-  #                                   proportion in 2nd half"),
-  #           slider_input_from_file("second_half_vs_first_transmission",
-  #                                 "Of transmission that occurs during detectable period, 
-  #                                   proportion in 2nd half"),
-  #           slider_input_from_file("resolving_detectable",
-  #                                 "Proportion of TB that will spontaneously resolve 
-  #                                   after becoming detectable")
-  #         ),
-  #         accordion_panel("Accrual before detectability",
-  #           slider_input_from_file("predetection_mm",
-  #                                  "Proportion of morbidity and mortality that accrue 
-  #                                  before TB becomes detectable by screening algorithm"),
-  #           slider_input_from_file("predetection_transmission",
-  #                                  "Proportion of transmission that occurs 
-  #                                  before TB becomes detectable by screening algorithm")
-  #         ),
-  #         accordion_panel("Accrual after routine diagnosis",
-  #           slider_input_from_file("postrx_mm",
-  #                                  "Proportion of morbidity and mortality that accrue 
-  #                                  after routine detection"),
-  #           slider_input_from_file("postrx_transmission",
-  #                                  "Proportion of transmission that occurs 
-  #                                  after routine detection"),
-  #         )
-  #       )
-  #     ),
-  #     mainPanel(
-  #       plotOutput("proportions_plot"),
-  #       plotOutput("time_course_plot")
-  #     )
-  #   )
-  # ),
-  # tabPanel("Average vs detected cases",
-  #   sidebarLayout(
-  #     sidebarPanel(
-
-  #       slider_input_from_file("duration_cv", "Coefficient of variation in TB duration"),
-  #       slider_input_from_file("duration_tbdeath_covarying_cv",
-  #                            "How mortality risk co-varies with total duration 
-  #                             (in absence of ACF)"),
-  #       slider_input_from_file("duration_transmission_covarying_cv",
-  #                            "How cumulative transmission covaries with total duration 
-  #                             (in absence of ACF)")
-  #     ),
-  #     mainPanel(
-  #       plotOutput("heterogeneity_plot")
-  #     )
-  #   )
-  # ),
   # tabPanel("Results",
   #   fluidRow(
   #     column(width = 6,
@@ -177,62 +178,64 @@ server <- function(input, output) {
     )
   })
 
-  # # Create a reactive list of all slider input values for second block
-  # sliderValues2 <- reactive({
-  #   list(
-  #     second_half_vs_first_mm = input$second_half_vs_first_mm,
-  #     second_half_vs_first_transmission = input$second_half_vs_first_transmission,
-  #     resolving_detectable = input$resolving_detectable,
-  #     predetection_mm = input$predetection_mm,
-  #     predetection_transmission = input$predetection_transmission,
-  #     postrx_mm = input$postrx_mm,
-  #     postrx_transmission = input$postrx_transmission
-  #   )
-  # })
+  # Create a reactive list of all slider input values for second block
+  sliderValues2 <- reactive({
+    list(
+      second_half_vs_first_mm = input$second_half_vs_first_mm,
+      second_half_vs_first_transmission = input$second_half_vs_first_transmission,
+      resolving_detectable = input$resolving_detectable,
+      predetection_mm = input$predetection_mm,
+      predetection_transmission = input$predetection_transmission,
+      postrx_mm = input$postrx_mm,
+      postrx_transmission = input$postrx_transmission
+    )
+  })
 
-  # # Create a reactive list of all slider input values for third block
-  # sliderValues3 <- reactive({
-  #   list(
-  #     duration_cv = input$duration_cv,
-  #     duration_tbdeath_covarying_cv = input$duration_tbdeath_covarying_cv
-  #   )
-  # })
+  # Create a reactive list of all slider input values for third block
+  sliderValues3 <- reactive({
+    list(
+      duration_cv = input$duration_cv,
+      duration_tbdeath_covarying_cv = input$duration_tbdeath_covarying_cv,
+      duration_transmision_covarying_cv = input$duration_transmision_covarying_cv
+    )
+  })
 
   # Define the intermediate reactive functions
-  averages = reactive(dalys_per_average_case(sliderValues1()))
-  # proportions = reactive(within_case_avertible(slidervalues2()))
-  # # within_case_cumulative_and_averted depends on both of the above, but not directly on slider inputs
-  # within_case = reactive(within_case_cumulative_and_averted(
-  #   averages = averages(), 
-  #   proportions = proportions()))
+  averages <- reactive(dalys_per_average_case(sliderValues1()))
+  proportions <- reactive(within_case_avertible(sliderValues2()))
   
-  # between_case = between_case_differences(sliderValues3)
+  within_case <- reactive(within_case_cumulative_and_averted(
+    averages = averages(),
+    proportions = proportions()))
+  
+  between_case <- reactive(between_case_differences(sliderValues3))
 
-  # # daly_estimator detpends on within_case_cumulative_and_averted (and its dependencies) and between_case_differences
-  # dalys_averted_per_case_detected = reactive(daly_estimator(
-  #   within_case = within_case(),
-  #   between_case = between_case()))
+  dalys_averted_per_case_detected <- reactive(
+    dalys_averted_per_case_detected(within_case = within_case(),
+                                    between_case = between_case()))
 
   # output$results_table = renderTable({
   #   as.data.frame(dalys_averted_per_case_detected())
   # })
 
   # plot functions depend on corresponding functions' outputs:
-  output$averages_plot <- renderPlot(
+  averages_plot_reactive <- reactive(
     plot_averages(output_dalys_per_average_case = averages()))
 
-  # output$proportions_plot = renderPlot(
-  #   plot_detectable_proportion(averages_plot = output$averages_plot(),
-  #                              estimates = sliderValues2()))
+  output$averages_plot <- renderPlot(averages_plot_reactive())
+  output$proportions_plot = renderPlot(
+    plot_detectable_proportion(averages_plot = averages_plot_reactive(),
+                               estimates = sliderValues2()))
 
-  # output$time_course_plot = renderPlot(
-  #   plot_time_course(within_case = within_case(), 
-  #                    estimates = sliderValues2))
+  output$time_course_plot <- renderPlot(
+    plot_time_course(within_case = within_case(),
+                     estimates = sliderValues2()))
 
-  # output$heterogeneity_plot = renderPlot(
-  #   plot_heterogeneity(estimates = sliderValues3()))
+  output$heterogeneity_plot <- renderPlot(
+    plot_heterogeneity(estimates = sliderValues3()))
 
-  # output$averted_plot = plot_averted(dalys_averted_per_case_detected)
+  # output$averted_plot <- renderPlot(
+  #   plot_averted(dalys_averted_per_case_detected()))
 
 
 }
