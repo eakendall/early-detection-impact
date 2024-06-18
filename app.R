@@ -1,4 +1,4 @@
-# setwd("./Google Drive//My Drive//DALY impact of ACF 2024/ACF-impact-Rshiny/")
+# setwd("~/Google Drive//My Drive//DALY impact of ACF 2024/ACF-impact-Rshiny/")
 library(shiny)
 library(bslib)
 library(bsplus)
@@ -196,7 +196,7 @@ server <- function(input, output) {
     list(
       duration_cv = input$duration_cv,
       duration_tbdeath_covarying_cv = input$duration_tbdeath_covarying_cv,
-      duration_transmision_covarying_cv = input$duration_transmision_covarying_cv
+      duration_transmission_covarying_cv = input$duration_transmission_covarying_cv
     )
   })
 

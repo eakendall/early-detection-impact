@@ -211,9 +211,6 @@ solve_for_gamma_parameters <- function(mean, sd)
 plot_heterogeneity <- function(estimates = midpoint_estimates,
                                N = 500) # just for visualization, too few for stable estimates
 {
-  
-  browser()
-  
   qs <- runif(N, 0, 1)
   qs_mort <- qs_trans <- qs
   if (estimates$duration_tbdeath_covarying_cv < 0) qs_mort <- 1 - qs
