@@ -4,7 +4,6 @@ source("daly_estimator.R")
 library(gridExtra)
 library(kableExtra)
 
-
 plot_averages <- function(output_dalys_per_average_case = NULL, 
                           input_first_block = midpoint_estimates, 
                           number_labels = TRUE)
@@ -28,18 +27,19 @@ plot_averages <- function(output_dalys_per_average_case = NULL,
     theme(axis.text.x = element_blank(),
           axis.ticks.x = element_blank(),
           panel.grid.major.x = element_blank(),
-          panel.grid.minor.x = element_blank())
+          panel.grid.minor.x = element_blank(),
+          axis.text.y = element_text(size = 14),
+          plot.title = element_text(size = 14))
     
   
   if (number_labels) plot <- plot + geom_text(aes(label = paste0  (ordered_component, ", ",round(value,2))),
                                               position = position_stack(vjust = .5)) else
                                                 plot <- plot + geom_text(aes(label = ordered_component),
-                                                                         position = position_stack(vjust = .5))
+                                                                         position = position_stack(vjust = .5),
+                                                                         size = 16)
                                               
  return(plot)
 }
-
-# plot_averages()
 
 plot_detectable_proportion <- function(averages_plot, estimates=midpoint_estimates)
 {
