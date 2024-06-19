@@ -142,7 +142,7 @@ tags$head(
           accordion_panel("Variance in disease duration",
             slider_input_from_file("duration_cv", "Coefficient of variation in TB duration (in absence of ACF)")
           ),
-          accordion_panel("Covariance with duration",
+          accordion_panel("Covariance of outcomes with duration",
             slider_input_from_file("duration_tbdeath_covarying_cv",
                                "How mortality risk co-varies with duration"),
             slider_input_from_file("duration_transmission_covarying_cv",
