@@ -7,7 +7,7 @@ library(kableExtra)
 
 plot_averages <- function(output_dalys_per_average_case = NULL, 
                           input_first_block = midpoint_estimates, 
-                          number_labels = TRUE)
+                          number_labels = TRUE, ymax = NULL)
 {
  
   if(missing(output_dalys_per_average_case)) 
@@ -23,7 +23,7 @@ plot_averages <- function(output_dalys_per_average_case = NULL,
                    mutate(ordered_component = fct_relevel(component, "Transmission", "Post-TB Sequelae", "TB Mortality", "TB Morbidity")),
                  aes(x=average_or_detected, y=value, fill=ordered_component)) +  
     geom_col(position = "stack", width = 1) +  
-    theme_minimal() + xlab("") + ylab("DALYs") + ggtitle("Total DALYS per average case") + 
+    theme_minimal() + xlab("") + ylab("DALYs") + ggtitle("Total DALYS generated per average case") + 
     guides(fill="none") +
     theme(axis.text.x = element_blank(),
           axis.ticks.x = element_blank(),
@@ -38,6 +38,8 @@ plot_averages <- function(output_dalys_per_average_case = NULL,
                                                 plot <- plot + geom_text(aes(label = ordered_component),  
                                                                          position = position_stack(vjust = .5),
                                                                          size = 5)
+
+  if (!is.null(ymax)) plot <- plot + ylim(0,ymax)
                                               
  return(plot)
 }
@@ -337,7 +339,9 @@ figure1 <- ggplot(as_tibble(relative_durations)) +
   xlim(0, quantile(relative_durations, 0.999)) +
   theme_minimal() + 
   labs(x = NULL, y = "Proportion of incident TB") +
-    theme(axis.text.y = element_blank(), plot.margin = margin(10, 10, 10, 10))
+    theme(axis.text.y = element_blank(), plot.margin = margin(10, 10, 10, 10),
+          axis.title = element_text(size = 14),
+          axis.text.x = element_text(size = 14))
   
 # Now scatter plot of relative durations vs relative DALYs for mortality
 figure2 <- ggplot(as_tibble(cbind(relative_durations, relative_dalys_mortality_withnoise))) + 
@@ -345,7 +349,9 @@ figure2 <- ggplot(as_tibble(cbind(relative_durations, relative_dalys_mortality_w
   xlim(0, quantile(relative_durations, 0.999)) +
   theme_minimal() + 
   labs(x = NULL, y = "Relative DALYs\nfrom TB mortality") +
-  theme(plot.margin = margin(10, 10, 10, 10))
+  theme(plot.margin = margin(10, 10, 10, 10),
+        axis.title = element_text(size = 14),
+          axis.text.x = element_text(size = 14))
 
 # and vs relative DALYs for transmission
 figure3 <- ggplot(as_tibble(cbind(relative_durations, relative_dalys_transmission_withnoise))) + 
@@ -353,7 +359,10 @@ figure3 <- ggplot(as_tibble(cbind(relative_durations, relative_dalys_transmissio
   xlim(0, quantile(relative_durations, 0.999)) +
   theme_minimal() +
   labs(x = "Relative duration \n(= relative probability of detection during ACF))", y = "Relative DALYs\nfrom transmission") +
-  theme(plot.margin = margin(10, 10, 10, 10))
+  theme(plot.margin = margin(10, 10, 10, 10),
+        # increase axis label size
+        axis.title = element_text(size = 14),
+          axis.text.x = element_text(size = 14))
 
 # Arrange the three figures in a column
 
@@ -389,7 +398,7 @@ return(outputtable)
 # Now a figure similar to plot_averages() but showing DALYs averted per case detected, using the "Averted by early detection, Average detected case" from table above. 
 
 
-plot_averted <- function(output, number_labels = TRUE)
+plot_averted <- function(output, number_labels = TRUE, ymax = NULL)
 {
  
   if(missing(output)) output <- daly_estimator()
@@ -408,13 +417,17 @@ plot_averted <- function(output, number_labels = TRUE)
     theme(axis.text.x = element_blank(),
           axis.ticks.x = element_blank(),
           panel.grid.major.x = element_blank(),
-          panel.grid.minor.x = element_blank())
+          panel.grid.minor.x = element_blank(),
+          axis.text.y = element_text(size = 14),
+          plot.title = element_text(size = 16))
     
   
   if (number_labels) plot <- plot + geom_text(aes(label = paste0  (ordered_component, ", ",round(value,2))),
                                               position = position_stack(vjust = .5)) else
                                                 plot <- plot + geom_text(aes(label = ordered_component),
                                                                          position = position_stack(vjust = .5))
+
+  if (!is.null(ymax)) plot <- plot + ylim(0,ymax)
                                               
  return(plot)
 }

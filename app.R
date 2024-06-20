@@ -1,11 +1,12 @@
 # setwd("~/Google Drive//My Drive//DALY impact of ACF 2024/ACF-impact-Rshiny/")
 library(shiny)
 library(bslib)
-library(bsplus)
-library(crosstalk)
+library(tidyverse)
+# library(bsplus)
+# library(crosstalk)
 library(plotly)
-library(leaflet)
-library(bsicons)
+# library(leaflet)
+# library(bsicons)
 
 source("daly_estimator.R")
 source("daly_plot_functions.R")
@@ -126,14 +127,9 @@ tags$head(
         )
       ),
       mainPanel(
-        fluidRow(
-          column(width = 5,
-            plotOutput("proportions_plot")
-          ),
-          column(width = 7,
-            plotOutput("time_course_plot")
-          )
-        )
+        style = "height: 90vh; overflow-y: auto;",
+        plotOutput("proportions_plot"),
+        plotOutput("time_course_plot")
       )
     )
   ),
@@ -159,13 +155,16 @@ tags$head(
   ),
   tabPanel("Results - DALYs averted per case detected",
     fluidRow(
-      column(width = 8,
+      column(width = 4,
+        plotOutput("averages_plot_ymax")
+      ),
+      column(width = 4,
         htmlOutput("results_table") # kable (html) table
       ),
       column(width = 4,
         plotOutput("averted_plot")
       )
-    )
+    ) 
    
   )
 )
@@ -244,12 +243,29 @@ server <- function(input, output) {
   output$heterogeneity_plot <- renderPlot(
     {plot_heterogeneity(estimates = sliderValues3())}, height = 600)
 
-  output$averted_plot <- renderPlot(
-    plot_averted(dalys_averted_per_case_detected()))
+  # both the results tab plots should have the same ymax
 
   output$results_table <- renderText({
-    output_table(dalys_averted_per_case_detected())
-  })
+    output_table(dalys_averted_per_case_detected())})
+
+  output$averages_plot_ymax <- renderPlot(
+    plot_averages(output_dalys_per_average_case = averages(), 
+    ymax = max(dalys_averted_per_case_detected() %>% 
+    filter((cumulative_or_averted == "cumulative" & average_or_detected == "average") |
+     (cumulative_or_averted == "averted" & average_or_detected == "detected") ) %>%
+     group_by(cumulative_or_averted) %>%
+     summarise(y = sum(value)) %>%
+     pull(y)) ))
+
+  output$averted_plot <- renderPlot(
+    plot_averted(dalys_averted_per_case_detected(),
+    ymax = max(dalys_averted_per_case_detected() %>% 
+    filter((cumulative_or_averted == "cumulative" & average_or_detected == "average") |
+     (cumulative_or_averted == "averted" & average_or_detected == "detected") ) %>%
+     group_by(cumulative_or_averted) %>%
+     summarise(y = sum(value)) %>%
+     pull(y))))
+
 }
 
 # call the shiny app ----
