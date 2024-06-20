@@ -49,6 +49,7 @@ tags$head(
 
     sidebarLayout(
       sidebarPanel(
+        style = "height: 90vh; overflow-y: auto;",
         accordion(
           id = "average case inputs",
           # multiple = TRUE,
@@ -75,13 +76,13 @@ tags$head(
           accordion_panel(
             title = "Temporal discounting",
             slider_input_from_file("discounting_rate", "Annual discounting rate on health outcomes",
-                                   step = 0.005)
+                                  step = 0.005)
           ),
           accordion_panel(
             title = "Transmission",
             slider_input_from_file("downstream_cases",
-                                   "# of attributable downstream cases 
-                                   [already discounted]", step = 0.25)
+                                  "# of attributable downstream cases 
+                                  [already discounted]", step = 0.25)
           ) #! consider changing this and adding discounting to this model instead
         )
       ),
@@ -93,42 +94,43 @@ tags$head(
   tabPanel("Timing of DALY accrual",
     sidebarLayout(
       sidebarPanel(
+        style = "height: 90vh; overflow-y: auto;",
         accordion(
           accordion_panel("Accrual before detectability",
             slider_input_from_file("predetection_mm",
-                                   "Proportion of morbidity and mortality that accrue 
-                                   before TB becomes detectable by screening algorithm"),
+                                  "Proportion of morbidity and mortality that accrue 
+                                  before TB becomes detectable by screening algorithm"),
             slider_input_from_file("predetection_transmission",
-                                   "Proportion of transmission that occurs 
-                                   before TB becomes detectable by screening algorithm")
+                                  "Proportion of transmission that occurs 
+                                  before TB becomes detectable by screening algorithm")
           ),
           accordion_panel("Accrual after routine diagnosis",
             slider_input_from_file("postrx_mm",
-                                   "Proportion of morbidity and mortality that accrue 
-                                   after routine detection"),
+                                  "Proportion of morbidity and mortality that accrue 
+                                  after routine detection"),
             slider_input_from_file("postrx_transmission",
-                                   "Proportion of transmission that occurs 
-                                   after routine detection")
+                                  "Proportion of transmission that occurs 
+                                  after routine detection")
           ),
           accordion_panel("Timing within detectable period",
             slider_input_from_file("second_half_vs_first_mm",
-                                   "Of personal DALYs that accrue during detectable period, 
-                                   proportion in 2nd half"),
+                                  "Of personal DALYs that accrue during detectable period, 
+                                  proportion in 2nd half"),
             slider_input_from_file("second_half_vs_first_transmission",
-                                   "Of transmission that occurs during detectable period, 
-                                   proportion in 2nd half"),
+                                  "Of transmission that occurs during detectable period, 
+                                  proportion in 2nd half"),
             slider_input_from_file("resolving_detectable",
-                                   "Proportion of TB that will spontaneously resolve 
-                                   after becoming detectable")
+                                  "Proportion of TB that will spontaneously resolve 
+                                  after becoming detectable")
           )
         )
       ),
       mainPanel(
         fluidRow(
-          column(width = 6,
+          column(width = 5,
             plotOutput("proportions_plot")
           ),
-          column(width = 6,
+          column(width = 7,
             plotOutput("time_course_plot")
           )
         )
@@ -146,7 +148,7 @@ tags$head(
             slider_input_from_file("duration_tbdeath_covarying_cv",
                                "How mortality risk co-varies with duration"),
             slider_input_from_file("duration_transmission_covarying_cv",
-                               "How cumulative transmission co-varies with duration")
+                              "How cumulative transmission co-varies with duration")
           )
         )
       ),
@@ -157,13 +159,14 @@ tags$head(
   ),
   tabPanel("Results - DALYs averted per case detected",
     fluidRow(
-      column(width = 4,
-        plotOutput("averted_plot")
-      ),
       column(width = 8,
         htmlOutput("results_table") # kable (html) table
+      ),
+      column(width = 4,
+        plotOutput("averted_plot")
       )
     )
+   
   )
 )
 
