@@ -383,12 +383,14 @@ output_table <- function(output)
     pivot_wider(names_from = cumulative_or_averted, values_from = value) %>%
     pivot_wider(names_from = average_or_detected, values_from = c(cumulative, averted)) %>%
     mutate(name = str_to_title(name)) %>%
+    bind_rows(summarise_all(., ~if(is.numeric(.)) sum(.) else "Total")) %>%
     kable(., format = "html",
           col.names=c("Source", rep(c("Average incident case", "Average detected case"), times = 2)),
           digits = 2) %>%
     kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE) %>%
     add_header_above(., header =
-      c(" " = 1, "Total cumulative DALYs per case" = 2, "Averted by early detection" = 2))
+      c(" " = 1, "Total cumulative DALYs per case" = 2, "Averted by early detection" = 2)) %>% 
+    row_spec(7,bold=T,hline_after = T)
 
 return(outputtable)
 }

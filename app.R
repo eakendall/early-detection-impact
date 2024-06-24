@@ -2,11 +2,7 @@
 library(shiny)
 library(bslib)
 library(tidyverse)
-# library(bsplus)
-# library(crosstalk)
 library(plotly)
-# library(leaflet)
-# library(bsicons)
 
 source("daly_estimator.R")
 source("daly_plot_functions.R")
@@ -42,56 +38,67 @@ tags$head(
     tags$style('body {
       font-family: Arial; 
       font-size: 12px; 
-      font-style: italic; }'
+      # font-style: italic; }'
     )),
 
+tabPanel("Total DALYs per average TB case",
   # organize as 4 navbarPages, for the three input sections plus the final results
-  tabPanel("Total DALYs per average TB case",
-
-    sidebarLayout(
-      sidebarPanel(
-        style = "height: 90vh; overflow-y: auto;",
-        accordion(
-          id = "average case inputs",
-          # multiple = TRUE,
-          accordion_panel(
-            title = "TB morbidity",
-            slider_input_from_file("tb_symptom_duration", "Duration of symptomatic TB (years)"),
-            slider_input_from_file("tb_symptom_dw", "Disability weight while symptomatic")
+  # within each tabPanel, include a results card
+  layout_columns(
+      col_widths = c(9,3),
+      card(
+        sidebarLayout(
+          sidebarPanel(
+            width = 5,
+            # style = "height: 90vh; overflow-y: auto;",
+            accordion(
+              id = "average case inputs",
+              # multiple = TRUE,
+              accordion_panel(
+                title = "TB morbidity",
+                slider_input_from_file("tb_symptom_duration", "Duration of symptomatic TB (years)"),
+                slider_input_from_file("tb_symptom_dw", "Disability weight while symptomatic")
+              ),
+              accordion_panel(
+                title = "TB mortality",
+                slider_input_from_file("tb_cfr", "TB case fatality ratio"),
+                slider_input_from_file("tb_death_yearslost", "Years of life lost per TB death")
+              ),
+              accordion_panel(
+                title = "Sequelae",
+                slider_input_from_file("posttb_symptom_duration", "Time lived with TB sequelae (years)"),
+                slider_input_from_file("posttb_symptom_dw", "Disability weight during TB sequelae", step = 0.02),
+                slider_input_from_file("posttb_cfr", "Post-TB fatality ratio 
+                                      (proportion of all TB survivors who die early of TB sequelae)", step = 0.01),
+                slider_input_from_file("posttb_death_yearslost",
+                                      "Years of life lost per death from TB sequelae"),
+                slider_input_from_file("posttb_death_timing", "Mean time to death from TB sequelae (years)")
+              ),
+              accordion_panel(
+                title = "Temporal discounting",
+                slider_input_from_file("discounting_rate", "Annual discounting rate on health outcomes",
+                                      step = 0.005)
+              ),
+              accordion_panel(
+                title = "Transmission",
+                slider_input_from_file("downstream_cases",
+                                      "# of attributable downstream cases 
+                                      [already discounted]", step = 0.25)
+              ) #! consider changing this and adding discounting to this model instead
+            )
           ),
-          accordion_panel(
-            title = "TB mortality",
-            slider_input_from_file("tb_cfr", "TB case fatality ratio"),
-            slider_input_from_file("tb_death_yearslost", "Years of life lost per TB death")
-          ),
-          accordion_panel(
-            title = "Sequelae",
-            slider_input_from_file("posttb_symptom_duration", "Time lived with TB sequelae (years)"),
-            slider_input_from_file("posttb_symptom_dw", "Disability weight during TB sequelae", step = 0.02),
-            slider_input_from_file("posttb_cfr", "Post-TB fatality ratio 
-                                  (proportion of all TB survivors who die early of TB sequelae)", step = 0.01),
-            slider_input_from_file("posttb_death_yearslost",
-                                  "Years of life lost per death from TB sequelae"),
-            slider_input_from_file("posttb_death_timing", "Mean time to death from TB sequelae (years)")
-          ),
-          accordion_panel(
-            title = "Temporal discounting",
-            slider_input_from_file("discounting_rate", "Annual discounting rate on health outcomes",
-                                  step = 0.005)
-          ),
-          accordion_panel(
-            title = "Transmission",
-            slider_input_from_file("downstream_cases",
-                                  "# of attributable downstream cases 
-                                  [already discounted]", step = 0.25)
-          ) #! consider changing this and adding discounting to this model instead
-        )
-      ),
-      mainPanel(
-        plotOutput("averages_plot"),
+          mainPanel(
+            width=7,
+            plotOutput("averages_plot", width = "100%")
+          )
+        ) # end sidebarLayout
+      ), # end main card
+      card(
+        card_header("Results summary"),
+        plotOutput("averted_plot")
       )
-    )
-  ),
+    ) # end layout_columns
+  ), # end tabPanel
   tabPanel("Timing of DALY accrual",
     sidebarLayout(
       sidebarPanel(
@@ -142,7 +149,7 @@ tags$head(
           ),
           accordion_panel("Covariance of outcomes with duration",
             slider_input_from_file("duration_tbdeath_covarying_cv",
-                               "How mortality risk co-varies with duration"),
+                              "How mortality risk co-varies with duration"),
             slider_input_from_file("duration_transmission_covarying_cv",
                               "How cumulative transmission co-varies with duration")
           )
@@ -165,9 +172,8 @@ tags$head(
         plotOutput("averted_plot")
       )
     ) 
-   
   )
-)
+) # end ui
 
 
 # Define server logic ----
@@ -246,6 +252,9 @@ server <- function(input, output) {
   # both the results tab plots should have the same ymax
 
   output$results_table <- renderText({
+    output_table(dalys_averted_per_case_detected())})
+
+    output$results_table <- renderText({
     output_table(dalys_averted_per_case_detected())})
 
   output$averages_plot_ymax <- renderPlot(
