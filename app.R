@@ -95,70 +95,94 @@ tabPanel("Total DALYs per average TB case",
       ), # end main card
       card(
         card_header("Results summary"),
-        htmlOutput("results_table_forsummary")
+        htmlOutput("results_table_forsummary1")
       )
     ) # end layout_columns
   ), # end tabPanel
   tabPanel("Timing of DALY accrual",
-    sidebarLayout(
-      sidebarPanel(
-        style = "height: 90vh; overflow-y: auto;",
-        accordion(
-          accordion_panel("Accrual before detectability",
-            slider_input_from_file("predetection_mm",
-                                  "Proportion of morbidity and mortality that accrue 
-                                  before TB becomes detectable by screening algorithm"),
-            slider_input_from_file("predetection_transmission",
-                                  "Proportion of transmission that occurs 
-                                  before TB becomes detectable by screening algorithm")
-          ),
-          accordion_panel("Accrual after routine diagnosis",
-            slider_input_from_file("postrx_mm",
-                                  "Proportion of morbidity and mortality that accrue 
-                                  after routine detection"),
-            slider_input_from_file("postrx_transmission",
-                                  "Proportion of transmission that occurs 
-                                  after routine detection")
-          ),
-          accordion_panel("Timing within detectable period",
-            slider_input_from_file("second_half_vs_first_mm",
-                                  "Of personal DALYs that accrue during detectable period, 
-                                  proportion in 2nd half"),
-            slider_input_from_file("second_half_vs_first_transmission",
-                                  "Of transmission that occurs during detectable period, 
-                                  proportion in 2nd half"),
-            slider_input_from_file("resolving_detectable",
-                                  "Proportion of TB that will spontaneously resolve 
-                                  after becoming detectable")
+    # within each tabPanel, include a results card
+    layout_columns(
+      col_widths = c(9,3),
+      card(
+        sidebarLayout(
+          sidebarPanel(
+            width = 5,
+            style = "height: 90vh; overflow-y: auto;",
+            accordion(
+              accordion_panel("Accrual before detectability",
+                slider_input_from_file("predetection_mm",
+                                      "Proportion of morbidity and mortality that accrue 
+                                      before TB becomes detectable by screening algorithm"),
+                slider_input_from_file("predetection_transmission",
+                                      "Proportion of transmission that occurs 
+                                      before TB becomes detectable by screening algorithm")
+              ),
+              accordion_panel("Accrual after routine diagnosis",
+                slider_input_from_file("postrx_mm",
+                                      "Proportion of morbidity and mortality that accrue 
+                                      after routine detection"),
+                slider_input_from_file("postrx_transmission",
+                                      "Proportion of transmission that occurs 
+                                      after routine detection")
+              ),
+              accordion_panel("Timing within detectable period",
+                slider_input_from_file("second_half_vs_first_mm",
+                                      "Of personal DALYs that accrue during detectable period, 
+                                      proportion in 2nd half"),
+                slider_input_from_file("second_half_vs_first_transmission",
+                                      "Of transmission that occurs during detectable period, 
+                                      proportion in 2nd half"),
+                slider_input_from_file("resolving_detectable",
+                                      "Proportion of TB that will spontaneously resolve 
+                                      after becoming detectable")
+              )
+            ) # end accordion
+          ), # end sidebarPanel
+          mainPanel(
+            style = "height: 90vh; overflow-y: auto;",
+            width = 7,
+            plotOutput("proportions_plot"),
+            plotOutput("time_course_plot")
           )
-        )
-      ),
-      mainPanel(
-        style = "height: 90vh; overflow-y: auto;",
-        plotOutput("proportions_plot"),
-        plotOutput("time_course_plot")
-      )
-    )
-  ),
+        ) # end sidebarLayout
+      ), # end main card
+      card(
+        card_header("Results summary"),
+        htmlOutput("results_table_forsummary2")
+      ) # end results card
+    ) # end layout_columns
+  ), # end tabPanel
   tabPanel("Average vs detected cases",
-    sidebarLayout(
-      sidebarPanel(
-        accordion(
-          accordion_panel("Variance in disease duration",
-            slider_input_from_file("duration_cv", "Coefficient of variation in TB duration (in absence of ACF)")
-          ),
-          accordion_panel("Covariance of outcomes with duration",
-            slider_input_from_file("duration_tbdeath_covarying_cv",
-                              "How mortality risk co-varies with duration"),
-            slider_input_from_file("duration_transmission_covarying_cv",
-                              "How cumulative transmission co-varies with duration")
-          )
-        )
-      ),
-      mainPanel(
-        plotOutput("heterogeneity_plot", height = "600px")
-      )
-    )
+    # within each tabPanel, include a results card
+    layout_columns(
+      col_widths = c(9,3),
+      card(
+        sidebarLayout(
+          sidebarPanel(
+            width = 5,
+              accordion(
+                accordion_panel("Variance in disease duration",
+                  slider_input_from_file("duration_cv", "Coefficient of variation in TB duration (in absence of ACF)")
+                ),
+                accordion_panel("Covariance of outcomes with duration",
+                  slider_input_from_file("duration_tbdeath_covarying_cv",
+                                    "How mortality risk co-varies with duration"),
+                  slider_input_from_file("duration_transmission_covarying_cv",
+                                    "How cumulative transmission co-varies with duration")
+                )
+              )
+            ),
+            mainPanel(
+              width = 7, 
+              plotOutput("heterogeneity_plot", height = "600px")
+            )
+          ) # end sidebarLayout
+      ), # end main card
+      card(
+        card_header("Results summary"),
+        htmlOutput("results_table_forsummary3")
+      ) # end results card
+    ) # end layout_columns
   ),
   tabPanel("Results - DALYs averted per case detected",
     fluidRow(
@@ -252,10 +276,16 @@ server <- function(input, output) {
   # both the results tab plots should have the same ymax
 
   output$results_table <- renderText({
-    output_table(dalys_averted_per_case_detected())})
+    output_table(dalys_averted_per_case_detected(), forsummary = 0)})
 
-    output$results_table_forsummary <- renderText({
-    output_table(dalys_averted_per_case_detected(),forsummary = TRUE)})
+    output$results_table_forsummary1 <- renderText({
+    output_table(dalys_averted_per_case_detected(), forsummary = 1)})
+
+    output$results_table_forsummary2 <- renderText({
+    output_table(dalys_averted_per_case_detected(), forsummary = 2)})
+
+    output$results_table_forsummary3 <- renderText({
+    output_table(dalys_averted_per_case_detected(), forsummary = 3)})
 
   output$averages_plot_ymax <- renderPlot(
     plot_averages(output_dalys_per_average_case = averages(), 

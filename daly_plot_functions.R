@@ -375,7 +375,7 @@ return(grid.arrange(figure1, figure2, figure3, ncol=1))
 
 # Display a table of numerical estimates
 
-output_table <- function(output, forsummary = FALSE)
+output_table <- function(output, forsummary = 0)
 {
   if (missing(output)) output <- daly_estimator()
 
@@ -385,15 +385,32 @@ output_table <- function(output, forsummary = FALSE)
     mutate(name = str_to_title(name)) %>%
     bind_rows(summarise_all(., ~if(is.numeric(.)) sum(.) else "Total")) 
 
-    if (forsummary) 
+    if (forsummary==1) 
     outputtable <- useoutput %>% 
       select(name, cumulative_average, averted_detected) %>%
       kable(., format = "html",
           digits = 2,
-          col.names=c("", "Total cumulative DALYs per case", "Averted by early detection")) %>%
+          col.names=c("", "Total cumulative DALYs per case (average case)", "Averted by early detection (detected case)")) %>%
       kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE) %>% 
       row_spec(5, bold = T, hline_after = T) else
-      
+
+    if (forsummary==2) 
+    outputtable <- useoutput %>% 
+      select(name, cumulative_average, averted_average, averted_detected) %>%
+      kable(., format = "html",
+          digits = 2,
+          col.names=c("", "Total cumulative DALYs per case (average case)", "Averted by early detection (average case)", "Averted by early detection (detected case)")) %>%
+      kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE) %>% 
+      row_spec(5, bold = T, hline_after = T) else
+
+    if (forsummary==3) 
+    outputtable <- useoutput %>% 
+      kable(., format = "html",
+          digits = 2,
+          col.names=c("", "Total cumulative DALYs per case (average case)", "Total cumulative DALYs per case (detected case)", "Averted by early detection (average case)", "Averted by early detection (detected case)")) %>%
+      kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE) %>% 
+      row_spec(5, bold = T, hline_after = T) else
+
     outputtable <- useoutput %>% 
     kable(., format = "html",
           col.names=c("Source", rep(c("Average incident case", "Average detected case"), times = 2)),
