@@ -95,7 +95,7 @@ tabPanel("Total DALYs per average TB case",
       ), # end main card
       card(
         card_header("Results summary"),
-        plotOutput("averted_plot")
+        htmlOutput("results_table_forsummary")
       )
     ) # end layout_columns
   ), # end tabPanel
@@ -254,8 +254,8 @@ server <- function(input, output) {
   output$results_table <- renderText({
     output_table(dalys_averted_per_case_detected())})
 
-    output$results_table <- renderText({
-    output_table(dalys_averted_per_case_detected())})
+    output$results_table_forsummary <- renderText({
+    output_table(dalys_averted_per_case_detected(),forsummary = TRUE)})
 
   output$averages_plot_ymax <- renderPlot(
     plot_averages(output_dalys_per_average_case = averages(), 
@@ -275,6 +275,7 @@ server <- function(input, output) {
      summarise(y = sum(value)) %>%
      pull(y))))
 
+  
 }
 
 # call the shiny app ----

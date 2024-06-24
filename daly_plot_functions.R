@@ -375,22 +375,33 @@ return(grid.arrange(figure1, figure2, figure3, ncol=1))
 
 # Display a table of numerical estimates
 
-output_table <- function(output)
+output_table <- function(output, forsummary = FALSE)
 {
   if (missing(output)) output <- daly_estimator()
 
-  outputtable <- output %>% 
+  useoutput <- output %>% 
     pivot_wider(names_from = cumulative_or_averted, values_from = value) %>%
     pivot_wider(names_from = average_or_detected, values_from = c(cumulative, averted)) %>%
     mutate(name = str_to_title(name)) %>%
-    bind_rows(summarise_all(., ~if(is.numeric(.)) sum(.) else "Total")) %>%
+    bind_rows(summarise_all(., ~if(is.numeric(.)) sum(.) else "Total")) 
+
+    if (forsummary) 
+    outputtable <- useoutput %>% 
+      select(name, cumulative_average, averted_detected) %>%
+      kable(., format = "html",
+          digits = 2,
+          col.names=c("", "Total cumulative DALYs per case", "Averted by early detection")) %>%
+      kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE) %>% 
+      row_spec(5, bold = T, hline_after = T) else
+      
+    outputtable <- useoutput %>% 
     kable(., format = "html",
           col.names=c("Source", rep(c("Average incident case", "Average detected case"), times = 2)),
           digits = 2) %>%
     kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE) %>%
     add_header_above(., header =
       c(" " = 1, "Total cumulative DALYs per case" = 2, "Averted by early detection" = 2)) %>% 
-    row_spec(7,bold=T,hline_after = T)
+    row_spec(5, bold = T, hline_after = T)
 
 return(outputtable)
 }
