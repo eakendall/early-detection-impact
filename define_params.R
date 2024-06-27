@@ -8,7 +8,7 @@ params$tb_symptom_dw <- c(0.35, 0.2, 0.6) # IHME 0.33 for HIV-, 0.41 for HIV+
 
 ## TB mortality
 params$tb_cfr <- c(0.12, 0.05, 0.2) # WHO Global Report 2023 mortality:incidence
-params$tb_death_yearslost <- c(15, 5, 30) # average age at TB death ~55, life expectancy 65-70 (reduced vs population average; https://www.who.int/data/gho/data/themes/mortality-and-global-health-estimates/ghe-life-expectancy-and-healthy-life-expectancy), but left skew on remaining life expectancy at time of TB death. # nolint
+params$tb_death_yearslost <- c(15, 5, 30) # average age at TB death ~55, remaining life expectancy 65-70 (reduced vs population average; https://www.who.int/data/gho/data/themes/mortality-and-global-health-estimates/ghe-life-expectancy-and-healthy-life-expectancy), but left skew on remaining life expectancy at time of TB death. # nolint
 params$discounting_rate <- c(0.03, 0.0, 0.07) # determines weight of future post-TB and transmission DALYs
 
 ## Sequelae
@@ -28,7 +28,7 @@ params$downstream_cases <- c(0.8, 0.5, 3) # should already be adjusted for tempo
 ## Timing of accrual within detectable period
 
 params$second_half_vs_first_mm <- c(0.67, 0.5, 0.75 ) # proportion of morbidity, mortality, and post-TB disease that accrue during 2nd half of detectable period
-params$second_half_vs_first_transmission <- c(0.67, 0.5, 0.75) 
+params$second_half_vs_first_transmission <- c(0.67, 0.5, 0.75)
 params$resolving_detectable <- c(0.2,0.1,0.3) # proportion that will end in spontaneous resolution, after becoming detectable
 
 ## Accrual before detectability

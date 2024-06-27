@@ -76,129 +76,6 @@ plot_detectable_proportion <- function(averages_plot, estimates=midpoint_estimat
 
 # plot_detectable_proportion()
 
-plot_time_course_old <- function(within_case = NULL, estimates = midpoint_estimates)
-{
-  if(missing(within_case)) within_case <- within_case_cumulative_and_averted(estimates = estimates)
-
-  plotdata <- rbind(within_case,
-                    within_case %>% filter(cumulative_or_averted=="cumulative") %>%
-                      mutate(cumulative_or_averted="detectable",
-                             value = value*case_when(name=="transmission" ~ (1-estimates$predetection_transmission -    estimates$postrx_transmission),
-                                                     TRUE ~ (1-estimates$predetection_mm - estimates$postrx_mm))),
-                    within_case %>% filter(cumulative_or_averted=="cumulative") %>%
-                      mutate(cumulative_or_averted="pre",
-                             value = value*case_when(name=="transmission" ~ estimates$predetection_transmission,
-                                                     TRUE ~ estimates$predetection_mm)),
-                    within_case %>% filter(cumulative_or_averted=="cumulative") %>%
-                      mutate(cumulative_or_averted="post",
-                             value = value*case_when(name=="transmission" ~ estimates$postrx_transmission,
-                                                     TRUE ~ estimates$postrx_mm)))
-                   
-  
-  # If second half area is s fraction of total, with arbitrary detectable period width 2 (from -1 to +1) and midpoint height 1, 
-  # then overall detectable area is 2;second half area is 2s;
-  # ending height h2 is such that (h2+1)/2*1= 2s -> h2 = 4s - 1;
-  # and initial height h1 of the first half is such that (h1+1)/2*1= 2-2s) --> h1 = 3 - 4s 
-  
-  # If pre period decays linearly to zero, and ratio of detectable to pre area is r,
-  # then width of pre period w should be selected such that w*h1/2 = 2*r --> w =4r/h1 = 4r/(3-4s)
-  # Similarly, if ratio of dertectable to post area is r2, then w2*h2/2 = 2*r2 --> w2 =4 r2/h2 = 4r2/(4s-1)
-  
-  # So now we can plot this.
-  # Will need to also adjust for pre and post paramertrs beig fractions of total, not of detectable, 
-  #  i.e. r = pre/detectable = pre/(1-pre-post) 
-
-  r1_transmission <- estimates$predetection_transmission/(1-estimates$predetection_transmission-estimates$postrx_transmission)
-  r2_transmission <- estimates$postrx_transmission/(1-estimates$predetection_transmission-estimates$postrx_transmission)
-  r1_mm <- estimates$predetection_mm/(1-estimates$predetection_mm-estimates$postrx_mm)
-  r2_mm <- estimates$postrx_mm/(1-estimates$predetection_mm-estimates$postrx_mm)
-  
-  h1_transmission <- 3 - 4*estimates$second_half_vs_first_transmission
-  h2_transmission <- 4*estimates$second_half_vs_first_transmission - 1
-  h1_mm <- 3 - 4*estimates$second_half_vs_first_mm 
-  h2_mm <- 4*estimates$second_half_vs_first_mm - 1
-  
-  # we're going to go around the polygon, first across the top. left to right, then bottom right to left. 
-  # xs are defined by start of predetect for transmission and mm, then start/end of detectable, then end of post rx for transmission and mm. 
-  # we'll define heights at each point (with bases at 0), then stack. 
-  transmission_predetection_wider <- estimates$predetection_transmission > estimates$predetection_mm
-  transmission_postrx_wider <- estimates$postrx_transmission > estimates$postrx_mm
-  rect_points <- as_tibble(t(c("x1"=ifelse(transmission_predetection_wider, -1-(4*r1_transmission/h1_transmission), -1-(4*r1_mm/h1_mm)), 
-                               "x2"=ifelse(transmission_predetection_wider, -1-(4*r1_mm/h1_mm), -1-(4*r1_transmission/h1_transmission)),
-                               "x3"=-1,
-                               "x4"=1,
-                               "x5"=ifelse(transmission_postrx_wider, 1+(4*r2_mm/h2_mm), 1+(4*r2_transmission/h2_transmission)),
-                               "x6"=ifelse(transmission_postrx_wider, 1+(4*r2_transmission/h2_transmission), 1+(4*r2_mm/h2_mm))))) %>% 
-    mutate(x7=x5, x8=x4, x9=x3, x10=x2)
-  
-  rect_points <- rbind(rect_points %>% mutate(component = "morbidity"),
-                       rect_points %>% mutate(component = "mortality"),
-                       rect_points %>% mutate(component = "sequelae"),
-                       rect_points %>% mutate(component = "transmission"))
-                       
-  
-  rect_points <- rect_points %>% mutate(y1=0,
-                                        y3=unlist(c(h1_transmission, h1_mm, h1_mm, h1_mm)*
-                                                    (within_case %>% filter(cumulative_or_averted=="cumulative") %>% 
-                                                     arrange(match(name, rect_points$component)) %>% select(value))),
-                                        y4= unlist(c(h2_transmission, h2_mm, h2_mm, h2_mm)*
-                                                     (within_case %>% filter(cumulative_or_averted=="cumulative") %>% 
-                                                        arrange(match(name, rect_points$component)) %>% select(value))),
-                                        y6=0,
-                                        y7=0, y8=0, y9=0, y10=0) %>%
-                                mutate(
-                                        y2=y3*case_when(component=="transmission" ~ 
-                                                       ifelse(transmission_predetection_wider, (x2+1)/(x1+1), 0),
-                                                     component!="transmission" ~ 
-                                                       ifelse(transmission_predetection_wider, 0, (x2+1)/(x1+1))),
-                                        y5=y4*case_when(component=="transmission" ~ 
-                                                       ifelse(transmission_postrx_wider, (x5-1)/(x6-1), 0),
-                                                     component!="transmission" ~ 
-                                                       ifelse(transmission_postrx_wider, 0, (x5-1)/(x6-1))))
-
-
-  # now need to stack them
-  rect_points_stacked <- rect_points %>% mutate(y2 = cumsum(y2), y3 = cumsum(y3), y4 = cumsum(y4), y5 = cumsum(y5)) %>%
-                                          mutate(y7 = c(0, y5[1:3]), y8 = c(0, y4[1:3]), y9 = c(0, y3[1:3]), y10 = c(0, y2[1:3]))
-
-  toplot <- rect_points_stacked %>%
-    pivot_longer(-component,
-                 names_to = c(".value", "id"),
-                 names_pattern = "(\\D)(\\d+)") %>%
-    mutate(component = factor(component, levels = rev(c("morbidity","mortality", "sequelae", "transmission"))))
-
-  time_course_plot <- ggplot(data = toplot) +
-    geom_polygon(aes(x = x, y = y, group = component, fill = component)) +
-    scale_fill_discrete(breaks = rev(levels(toplot$component))) +
-    xlab("Time (arbitrary scale)") +
-    ylab("DALY accrual rate (arbitrary scale)") +
-    scale_x_discrete(labels = NULL, breaks = NULL) +
-    scale_y_discrete(labels = NULL, breaks = NULL) +
-    theme_minimal() +
-    geom_rect(data = rect_points_stacked, aes(xmin = min(x1), xmax = max(x3), ymin = 0, ymax = max(y4)),
-              fill = "gray", alpha = 0.3) +
-    geom_rect(data = rect_points_stacked, aes(xmin = min(x4), xmax = max(x6), ymin = 0, ymax = max(y4)),
-              fill = "gray", alpha = 0.3) +
-    geom_vline(xintercept = -1, linetype = 2) + geom_vline(xintercept = 1, linetype=2) +
-    annotate(geom = "text", x = (min(rect_points_stacked$x1) - 1) / 2, y = max(rect_points_stacked$y4) / 2,
-             label = "before detectability", angle = 90) +
-    annotate(geom = "text", x = (max(rect_points_stacked$x6) + 1) / 2, y = max(rect_points_stacked$y4) / 2,
-             label = "after routine detection", angle = 90) +
-    guides(fill = guide_legend(reverse = TRUE)) +
-    ggtitle("Timing of DALY accrual") +
-    theme(axis.text = element_text(size = 14),
-          plot.title = element_text(size = 16))
-
-
-      
-    return(time_course_plot)
-}
-
-# plot_time_course_old()  
-
-
-# In this new version of plot_time_course, I'm not going to plot what happens outside of the detectable window.
-# So I just need to know the relative heights of the parallelograms at start vs end of detectability. 
 
 plot_time_course <- function(within_case = NULL, estimates = midpoint_estimates)
 {
@@ -224,10 +101,10 @@ plot_time_course <- function(within_case = NULL, estimates = midpoint_estimates)
   # ending height h2 is such that (h2+1)/2*1= 2s -> h2 = 4s - 1;
   # and initial height h1 of the first half is such that (h1+1)/2*1= 2-2s) --> h1 = 3 - 4s 
   
-  h1_transmission <- 3 - 4*estimates$second_half_vs_first_transmission
-  h2_transmission <- 4*estimates$second_half_vs_first_transmission - 1
-  h1_mm <- 3 - 4*estimates$second_half_vs_first_mm 
-  h2_mm <- 4*estimates$second_half_vs_first_mm - 1
+  h1_transmission <- 3 - 4 * estimates$second_half_vs_first_transmission
+  h2_transmission <- 4 * estimates$second_half_vs_first_transmission - 1
+  h1_mm <- 3 - 4 * estimates$second_half_vs_first_mm
+  h2_mm <- 4 * estimates$second_half_vs_first_mm - 1
   
   # we're going to go around the polygon, first across the top. left to right, then bottom right to left. 
   # xs are defined by start of predetect for transmission and mm, then start/end of detectable, then end of post rx for transmission and mm. 
@@ -244,10 +121,10 @@ plot_time_course <- function(within_case = NULL, estimates = midpoint_estimates)
                        
   
   rect_points <- rect_points %>% mutate(y1=0,
-                                        y2=unlist(c(h1_transmission, h1_mm, h1_mm, h1_mm)*
+                                        y2=unlist(c(h1_mm, h1_mm, h1_mm, h1_transmission)*
                                                     (within_case %>% filter(cumulative_or_averted=="cumulative") %>% 
                                                      arrange(match(name, rect_points$component)) %>% select(value))),
-                                        y3= unlist(c(h2_transmission, h2_mm, h2_mm, h2_mm)*
+                                        y3= unlist(c(h2_mm, h2_mm, h2_mm, h2_transmission)*
                                                      (within_case %>% filter(cumulative_or_averted=="cumulative") %>% 
                                                         arrange(match(name, rect_points$component)) %>% select(value))),
                                         y4=0)
@@ -271,11 +148,10 @@ plot_time_course <- function(within_case = NULL, estimates = midpoint_estimates)
     theme_minimal() +
     geom_rect(data = rect_points_stacked, aes(xmin = min(x1), xmax = 2*min(x1), ymin = 0, ymax = max(y3)),
               fill = "gray", alpha = 0.3) +
-    geom_rect(data = rect_points_stacked, aes(xmin = min(x4), xmax = 2*max(x4), ymin = 0, ymax = max(y3)),
-              fill = "gray", alpha = 0.3) +
+    geom_vline(data = rect_points_stacked, aes(xintercept = min(x4))) +
     annotate(geom = "text", x = 1.5*max(rect_points_stacked$x1), y = max(rect_points_stacked$y4) / 2,
              label = "before detectability", angle = 90) +
-    annotate(geom = "text", x = 1.5*max(rect_points_stacked$x4), y = max(rect_points_stacked$y4) / 2,
+    annotate(geom = "text", x = 1.1*min(rect_points_stacked$x4), y = max(rect_points_stacked$y4) / 2,
              label = "after routine detection", angle = 90) +
     guides(fill = guide_legend(reverse = TRUE)) +
     ggtitle("Timing of DALY accrual") +
