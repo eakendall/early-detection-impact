@@ -50,7 +50,7 @@ tabPanel("Total DALYs per average TB case",
         sidebarLayout(
           sidebarPanel(
             width = 5,
-            # style = "height: 90vh; overflow-y: auto;",
+            style = "height: 90vh; overflow-y: auto;",
             accordion(
               id = "average case inputs",
               # multiple = TRUE,
@@ -160,6 +160,7 @@ tabPanel("Total DALYs per average TB case",
         sidebarLayout(
           sidebarPanel(
             width = 5,
+            style = "height: 90vh; overflow-y: auto;",
               accordion(
                 accordion_panel("Variance in disease duration",
                   slider_input_from_file("duration_cv", "Coefficient of variation in TB duration (in absence of ACF)")
@@ -174,7 +175,7 @@ tabPanel("Total DALYs per average TB case",
             ),
             mainPanel(
               width = 7, 
-              plotOutput("heterogeneity_plot", height = "600px")
+              plotOutput("heterogeneity_plot", height = "900px")
             )
           ) # end sidebarLayout
       ), # end main card

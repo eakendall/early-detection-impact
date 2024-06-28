@@ -213,32 +213,45 @@ plot_heterogeneity <- function(estimates = midpoint_estimates,
 figure1 <- ggplot(as_tibble(relative_durations)) + 
   geom_density(aes(x=value), fill="blue", alpha=0.5) +
   xlim(0, quantile(relative_durations, 0.999)) +
-  theme_minimal() + 
-  labs(x = NULL, y = "Proportion of incident TB") +
-    theme(axis.text.y = element_blank(), plot.margin = margin(10, 10, 10, 10),
+  theme_minimal() +
+  ggtitle("Distribution of disease duration") +
+   theme(axis.text.y = element_blank(), plot.margin = margin(10, 10, 10, 10),
           axis.title = element_text(size = 14),
-          axis.text.x = element_text(size = 14))
+          axis.text.x = element_blank()) + 
+    geom_vline(xintercept = 1, linetype = "dashed") + 
+    # label the line as the mean duration of detectable period
+    annotate(geom = "text", x = 1, y = 0.1, label = "Mean duration of detectable period", angle = 90, hjust = 0, vjust = -1)
+
   
 # Now scatter plot of relative durations vs relative DALYs for mortality
 figure2 <- ggplot(as_tibble(cbind(relative_durations, relative_dalys_mortality_withnoise))) + 
-  geom_point(aes(x=relative_durations, y=relative_dalys_mortality_withnoise), alpha=0.5) +
+  geom_point(aes(x=relative_durations, y=relative_dalys_mortality_withnoise), size=1) +
   xlim(0, quantile(relative_durations, 0.999)) +
   theme_minimal() + 
   labs(x = NULL, y = "Relative DALYs\nfrom TB mortality") +
   theme(plot.margin = margin(10, 10, 10, 10),
         axis.title = element_text(size = 14),
-          axis.text.x = element_text(size = 14))
+           axis.text = element_blank()) + 
+    geom_vline(xintercept = 1, linetype = "dashed") +
+    geom_hline(yintercept = 1, linetype = "dashed") +
+    # label the line as the mean duration of detectable period
+    annotate(geom = "text", y = 1, x = 0.9, label = "Mortality risk of the average case", angle = 0, hjust = -1, vjust = -1)
 
 # and vs relative DALYs for transmission
 figure3 <- ggplot(as_tibble(cbind(relative_durations, relative_dalys_transmission_withnoise))) + 
-  geom_point(aes(x=relative_durations, y=relative_dalys_transmission_withnoise), alpha=0.5) +
+  geom_point(aes(x=relative_durations, y=relative_dalys_transmission_withnoise), size = 1) +
   xlim(0, quantile(relative_durations, 0.999)) +
   theme_minimal() +
   labs(x = "Relative duration \n(= relative probability of detection during ACF))", y = "Relative DALYs\nfrom transmission") +
   theme(plot.margin = margin(10, 10, 10, 10),
         # increase axis label size
         axis.title = element_text(size = 14),
-          axis.text.x = element_text(size = 14))
+        axis.text = element_blank()) + 
+    geom_vline(xintercept = 1, linetype = "dashed") + 
+    geom_hline(yintercept = 1, linetype = "dashed") + 
+    # label the line as the mean duration of detectable period
+    annotate(geom = "text", y = 1, x = 0.9, label = "Transmission from the average case", angle = 0, hjust = -1, vjust = -1)
+
 
 # Arrange the three figures in a column
 
