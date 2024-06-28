@@ -131,10 +131,7 @@ tabPanel("Total DALYs per average TB case",
                                       proportion in 2nd half"),
                 slider_input_from_file("second_half_vs_first_transmission",
                                       "Of transmission that occurs during detectable period, 
-                                      proportion in 2nd half"),
-                slider_input_from_file("resolving_detectable",
-                                      "Proportion of TB that will spontaneously resolve 
-                                      after becoming detectable")
+                                      proportion in 2nd half")
               )
             ) # end accordion
           ), # end sidebarPanel
@@ -226,7 +223,6 @@ server <- function(input, output) {
     list(
       second_half_vs_first_mm = input$second_half_vs_first_mm,
       second_half_vs_first_transmission = input$second_half_vs_first_transmission,
-      resolving_detectable = input$resolving_detectable,
       predetection_mm = input$predetection_mm,
       predetection_transmission = input$predetection_transmission,
       postrx_mm = input$postrx_mm,

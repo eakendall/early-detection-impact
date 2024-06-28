@@ -46,10 +46,10 @@ within_case_avertible <- function(estimates = midpoint_estimates)
   with(estimates, {
     
     average_proportion_avertible_mm <- (1-predetection_mm - postrx_mm)*
-      (0.5*resolving_detectable + second_half_vs_first_mm*(1-resolving_detectable)) 
+      (second_half_vs_first_mm) 
 
     average_proportion_avertible_transmission <- (1-predetection_transmission - postrx_transmission)*
-      (0.5*resolving_detectable + second_half_vs_first_transmission*(1-resolving_detectable))
+      (second_half_vs_first_transmission)
 
       return(list(
         "average_proportion_avertible_mm" = average_proportion_avertible_mm,

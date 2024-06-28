@@ -29,7 +29,6 @@ params$downstream_cases <- c(0.8, 0.5, 3) # should already be adjusted for tempo
 
 params$second_half_vs_first_mm <- c(0.67, 0.5, 0.75 ) # proportion of morbidity, mortality, and post-TB disease that accrue during 2nd half of detectable period
 params$second_half_vs_first_transmission <- c(0.67, 0.5, 0.75)
-params$resolving_detectable <- c(0.2,0.1,0.3) # proportion that will end in spontaneous resolution, after becoming detectable
 
 ## Accrual before detectability
 
