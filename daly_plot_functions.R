@@ -138,26 +138,52 @@ plot_time_course <- function(within_case = NULL, estimates = midpoint_estimates)
                  names_pattern = "(\\D)(\\d+)") %>%
     mutate(component = factor(component, levels = rev(c("morbidity","mortality", "sequelae", "transmission"))))
 
+  # make gradient of x shadings for "before dectectability" rectangle
+  n <- 1000
+  x_steps <- seq(from = min(rect_points_stacked$x1), to = 1.4*min(rect_points_stacked$x1), length.out = n + 1)
+  alpha_steps <- seq(from = 0.3, to = 0, length.out = n)
+  rect_grad <- data.frame(xmin = x_steps[-(n + 1)], 
+                          xmax = x_steps[-1], 
+                          alpha = alpha_steps,
+                          ymin = 0,
+                          ymax = max(rect_points_stacked$y3))
+
   time_course_plot <- ggplot(data = toplot) +
     geom_polygon(aes(x = x, y = y, group = component, fill = component)) +
     scale_fill_discrete(breaks = rev(levels(toplot$component))) +
-    xlab("Time (arbitrary scale)") +
+    xlab("Time during detectable period") +
     ylab("DALY accrual rate (arbitrary scale)") +
     scale_x_discrete(labels = NULL, breaks = NULL) +
     scale_y_discrete(labels = NULL, breaks = NULL) +
     theme_minimal() +
-    geom_rect(data = rect_points_stacked, aes(xmin = min(x1), xmax = 2*min(x1), ymin = 0, ymax = max(y3)),
-              fill = "gray", alpha = 0.3) +
+    geom_rect(data=rect_grad, 
+              aes(xmin=xmin, xmax=xmax,
+                  ymin=ymin, ymax=ymax, 
+                  alpha=alpha), fill="gray") + 
+    guides(alpha = "none") + 
     geom_vline(data = rect_points_stacked, aes(xintercept = min(x4))) +
-    annotate(geom = "text", x = 1.5*max(rect_points_stacked$x1), y = max(rect_points_stacked$y4) / 2,
-             label = "before detectability", angle = 90) +
-    annotate(geom = "text", x = 1.1*min(rect_points_stacked$x4), y = max(rect_points_stacked$y4) / 2,
-             label = "after routine detection", angle = 90) +
+    annotate(geom = "text", x = 1.15 * max(rect_points_stacked$x1), y = max(rect_points_stacked$y4) / 2,
+             label = "before detectability", angle = 90, size=4, fontface = "italic") +
+    annotate(geom = "text", x = 1.08 * min(rect_points_stacked$x4), y = max(rect_points_stacked$y4) / 2,
+             label = "after routine detection", angle = 90, size=4, fontface = "italic") +
     guides(fill = guide_legend(reverse = TRUE)) +
     ggtitle("Timing of DALY accrual") +
-    theme(axis.text = element_text(size = 14),
-          plot.title = element_text(size = 16))
+    theme(axis.text = element_text(size = 16),
+          plot.title = element_text(size = 16),
+          legend.position = "inside",
+          legend.position.inside = c(.4,.7)) + 
+    # at top of plot, add horizontal arrows from o to 1 and from 0 to -1
+     annotate("segment", x = 0.04, y = max(rect_points_stacked$y3), xend = 1, yend = max(rect_points_stacked$y3), 
+         linejoin = "mitre", linewidth = 5, color = "gray40",
+         arrow = arrow(type = "closed", length = unit(0.01, "npc"))) +
+    annotate("text", x = 0.08, y = max(rect_points_stacked$y3), label = "More likely to intercept", color = "white", 
+         hjust = 0, size = 3) + 
 
+    annotate("segment", x = -0.04, y = max(rect_points_stacked$y3), xend = -1, yend = max(rect_points_stacked$y3), 
+         linejoin = "mitre", linewidth = 5, color = "gray40",
+         arrow = arrow(type = "closed", length = unit(0.01, "npc"))) +
+    annotate("text", x = -0.08, y = max(rect_points_stacked$y3), label = "Less likely to intercept", color = "white", 
+         hjust = 1, size = 3)
 
       
     return(time_course_plot)

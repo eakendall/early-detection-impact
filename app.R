@@ -41,6 +41,8 @@ tags$head(
       # font-style: italic; }'
     )),
 
+  collapsible = TRUE,
+
 tabPanel("Total DALYs per average TB case",
   # organize as 4 navbarPages, for the three input sections plus the final results
   # within each tabPanel, include a results card
@@ -100,7 +102,14 @@ tabPanel("Total DALYs per average TB case",
     ) # end layout_columns
   ), # end tabPanel
   tabPanel("Timing of DALY accrual",
-    # within each tabPanel, include a results card
+    card(
+       max_height = 250,
+      full_screen = TRUE,
+      card_header("Overview of DALY accrual portion of model"),
+      p("Disease in the present may increase the risk of future morbidity, mortality, and secondary cases. 'Accrual' refers to whenfuture DALYs become inevitable, even if they haven't yet occurred."),
+      p("Some DALYs may accrue before TB becomes detectable through screening, or after it would be diagnosed through routine care even without screening. These will not be affected by early detection."),
+      p("Within the detectable period, the rate of DALY accrual may increase over time as disease becomes more severe. Cross-sectional screening will intercept TB at a random point in its disease course and thus preferentially averts the proportion of DALYs that accrue later in the detectable period.")
+    ),
     layout_columns(
       col_widths = c(9,3),
       card(
