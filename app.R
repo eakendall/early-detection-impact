@@ -194,7 +194,7 @@ tabPanel("Total DALYs per average TB case",
   tabPanel("Results - DALYs averted per case detected",
     fluidRow(
       column(width = 4,
-        plotOutput("averages_plot_ymax")
+        plotOutput("averages_plot_with_averted")
       ),
       column(width = 4,
         htmlOutput("results_table") # kable (html) table
@@ -293,25 +293,25 @@ server <- function(input, output) {
     output$results_table_forsummary3 <- renderText({
     output_table(dalys_averted_per_case_detected(), forsummary = 3)})
 
-  output$averages_plot_ymax <- renderPlot(
-    plot_averages(output_dalys_per_average_case = averages(), 
-    ymax = max(dalys_averted_per_case_detected() %>% 
-    filter((cumulative_or_averted == "cumulative" & average_or_detected == "average") |
-     (cumulative_or_averted == "averted" & average_or_detected == "detected") ) %>%
-     group_by(cumulative_or_averted) %>%
-     summarise(y = sum(value)) %>%
-     pull(y)) ))
-
-  output$averted_plot <- renderPlot(
-    plot_averted(dalys_averted_per_case_detected(),
-    ymax = max(dalys_averted_per_case_detected() %>% 
-    filter((cumulative_or_averted == "cumulative" & average_or_detected == "average") |
-     (cumulative_or_averted == "averted" & average_or_detected == "detected") ) %>%
-     group_by(cumulative_or_averted) %>%
+  output$averages_plot_with_averted <- renderPlot(
+    plot_averted_portion(dalys_averted_per_case_detected(),
+    base = "average",
+    ymax = max(dalys_averted_per_case_detected() %>%
+    filter((cumulative_or_averted == "cumulative" &
+      (average_or_detected == "average") |  average_or_detected == "detected")) %>%
+     group_by(average_or_detected) %>%
      summarise(y = sum(value)) %>%
      pull(y))))
 
-  
+  output$averted_plot <- renderPlot(
+    plot_averted_portion(dalys_averted_per_case_detected(),
+    base = "detected",
+    ymax = max(dalys_averted_per_case_detected() %>%
+      filter((cumulative_or_averted == "cumulative" &
+      (average_or_detected == "average") |  average_or_detected == "detected")) %>%
+      group_by(average_or_detected) %>%
+      summarise(y = sum(value)) %>%
+      pull(y))))
 }
 
 # call the shiny app ----

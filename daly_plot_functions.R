@@ -4,6 +4,8 @@ source("daly_estimator.R")
 
 library(gridExtra)
 library(kableExtra)
+library(ggpattern)
+library(magick)
 
 plot_averages <- function(output_dalys_per_average_case = NULL, 
                           input_first_block = midpoint_estimates, 
@@ -380,3 +382,45 @@ plot_averted <- function(output, number_labels = TRUE, ymax = NULL)
 # plot_averted()
 
 
+plot_averted_portion <- function(output, ymax = NULL, base = "detected")
+{
+ 
+  if(missing(output)) output <- daly_estimator()
+   
+  plot <- ggplot(output %>% filter(average_or_detected == base)  %>% 
+                   mutate(component = case_when(str_detect(name, "mortality") ~ "TB Mortality",
+                                                str_detect(name, "morbidity") ~ "TB Morbidity",
+                                                str_detect(name, "sequelae") ~ "Post-TB Sequelae",
+                                                str_detect(name, "transmission") ~ "Transmission")) %>%
+                  pivot_wider(names_from = "cumulative_or_averted", values_from = "value") %>%
+                  mutate(difference = cumulative - averted) %>%
+                  pivot_longer(cols = c("cumulative", "averted", "difference"), names_to = "cumulative_or_averted", values_to = "value") %>%
+                  filter(cumulative_or_averted != "cumulative") %>%
+                  mutate(ordered_component = fct_relevel(component, "Transmission", "Post-TB Sequelae", "TB Mortality", "TB Morbidity")),
+                  
+                   # make a stacked bar plot of "cumulative", and shade the "averted" portion of each in gray
+                aes(x=average_or_detected, y=value, fill=ordered_component, pattern = cumulative_or_averted)) +
+          geom_col_pattern(position = "stack", width = 1,
+            pattern_fill = 'black',  pattern_spacing = 0.015) +
+          scale_pattern_manual(name = "Averted by early detection?", 
+                               values = c("stripe", "none"), 
+                               breaks = c("averted", "difference"),
+                               labels = c("Averted", "Not averted")) +
+        theme_minimal() + xlab("") + ylab("DALYs") + 
+        guides(fill="none") +
+        theme(axis.text.x = element_blank(),
+          axis.ticks.x = element_blank(),
+          panel.grid.major.x = element_blank(),
+          panel.grid.minor.x = element_blank(),
+          axis.text.y = element_text(size = 14),
+          plot.title = element_text(size = 16),
+          legend.position = "bottom")
+
+    
+  if (base == "detected") plot <- plot + ggtitle("DALYs per *detected* case") else
+    plot <- plot + ggtitle("DALYS per *average* case")
+  
+  if (!is.null(ymax)) plot <- plot + ylim(0,ymax)
+                                              
+ return(plot)
+}
