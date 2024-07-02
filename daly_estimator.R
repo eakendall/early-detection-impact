@@ -9,13 +9,18 @@ dalys_per_average_case <- function(estimates = midpoint_estimates, plot = FALSE)
 
   # TB morbidity DALYs
     morbidity_average_case <- tb_symptom_duration*tb_symptom_dw
-    mortality_average_case <- tb_cfr*sum((1-discounting_rate)^(0:(tb_death_yearslost-1)))
+    mortality_average_case <- tb_cfr * sum((1 - discounting_rate)^(0:(tb_death_yearslost - 1)))
+
   # Post-TB DALYs
-    sequelae_average_case <- sum((1-discounting_rate)^(0:(posttb_symptom_duration-1)))*posttb_symptom_dw + 
-      posttb_cfr*sum((1-discounting_rate)^(posttb_death_timing:(posttb_death_timing + posttb_death_yearslost))) 
+    sequelae_average_case <- sum((1 - discounting_rate)^(0:(posttb_symptom_duration - 1))) * posttb_symptom_dw +
+      posttb_cfr * sum((1 - discounting_rate)^(posttb_death_timing:(posttb_death_timing + posttb_death_yearslost)))
   
   # Downstream case DALYs
-  transmission_average_case <- downstream_cases*(mortality_average_case + morbidity_average_case + sequelae_average_case)
+  transmission_average_case <-
+    downstream_cases *
+    (mortality_average_case + morbidity_average_case + sequelae_average_case) *
+    ((1-discounting_rate)^(downstream_timing))
+  
   
   # output a dataframe with the different components, classified as "cumulative" (vs averted) dalys for hte "average" (vs detected) case
   averages = tibble(
@@ -118,5 +123,5 @@ daly_estimator <- function(within_case = NULL,
   return(rbind(cumulativerows, detectedrows))
 }
 
-# daly_estimator(midpoint_estimates)
+# daly_estimator()
 

@@ -2,7 +2,7 @@ library(tidyverse)
 
 # Mean age at TB incidence, globally
 
-tb_burden_estimates <- read.csv("~/Downloads/TB_burden_age_sex_2024-06-25.csv")
+tb_burden_estimates <- read.csv("TB_burden_age_sex_2024-06-25.csv")
 # https://www.who.int/teams/global-tuberculosis-programme/data
 # WHO TB incidence estimates disaggregated by age group, sex and risk factor [>0.5Mb]
 

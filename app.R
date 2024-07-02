@@ -19,11 +19,11 @@ slider_input_from_file <- function(id, label, paramtable = paramdf, step = NULL)
 
 .boot_dep <- "https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.0.0/css/bootstrap.min.css"
 
-ui <- bslib::page_navbar( 
+ui <- bslib::page_navbar(
   title = "ACF Impact",
 
-# change font sizes/formatting of all sliders
-tags$head(
+  # change font sizes/formatting of all sliders
+  tags$head(
     tags$style(HTML("
       .irs-bar {width: 100%; height: 25px; background: black; border-top: 1px solid black; border-bottom: 1px solid black;}
       .irs-bar-edge {background: black; border: 1px solid black; height: 25px; border-radius: 0px; width: 20px;}
@@ -77,16 +77,17 @@ tabPanel("Total DALYs per average TB case",
                 slider_input_from_file("posttb_death_timing", "Mean time to death from TB sequelae (years)")
               ),
               accordion_panel(
-                title = "Temporal discounting",
-                slider_input_from_file("discounting_rate", "Annual discounting rate on health outcomes",
-                                      step = 0.005)
-              ),
-              accordion_panel(
                 title = "Transmission",
                 slider_input_from_file("downstream_cases",
-                                      "# of attributable downstream cases 
-                                      [already discounted]", step = 0.25)
-              ) #! consider changing this and adding discounting to this model instead
+                                      "# of attributable downstream cases", step = 0.25),
+                slider_input_from_file("downstream_timing",
+                                      "Mean years to downstream cases")
+              ),
+              accordion_panel(
+              title = "Temporal discounting",
+              slider_input_from_file("discounting_rate", "Annual discounting rate",
+                                      step = 0.005)
+              ),
             )
           ),
           mainPanel(
@@ -223,7 +224,8 @@ server <- function(input, output) {
       posttb_death_yearslost = input$posttb_death_yearslost,
       posttb_death_timing = input$posttb_death_timing,
       discounting_rate = input$discounting_rate,
-      downstream_cases = input$downstream_cases
+      downstream_cases = input$downstream_cases,
+      downstream_timing = input$downstream_timing
     )
   })
 

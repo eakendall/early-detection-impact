@@ -13,14 +13,15 @@ params$discounting_rate <- c(0.03, 0.0, 0.07) # determines weight of future post
 
 ## Sequelae
 params$posttb_symptom_duration <- c(25, 10, 40) # total post-TB survival. Average age ~40 and life expectancy ~65?.
-params$posttb_symptom_dw <- c(0.035, 0.01, 0.10) # disability weight averaged over all post-TB survival, per Menzies et al 2021. Corresponds to 20% prevalence of mild (DW 0.02), 5% of moderate (DW 0.2), and 5% of severe (DW 0.4) COPD, for example. # nolint
+params$posttb_symptom_dw <- c(0.03, 0.01, 0.10) # disability weight averaged over all post-TB survival, 0.035 per Menzies et al 2021. Corresponds to 20% prevalence of mild (DW 0.02), 5% of moderate (DW 0.2), and 5% of severe (DW 0.4) COPD, for example. # nolint
 params$posttb_cfr <- c(0.05, 0.02, 0.15) # menzies paper, average 1.14x RR of mortality ==> ~.14/1.14=12% of TB survivors die of post-TB sequelae. But this seems high. # nolint
 params$posttb_death_yearslost <- c(15, 5, 30) # similar to YLL from TB deaths, beacuse occur on a delay but also in people who were younger when they developed TB?
 params$posttb_death_timing <- c(5,1,10) #mean years to death, for those who die early of post-TB sequelae. Relevant to discounting only. 
 
 
 # Transmission
-params$downstream_cases <- c(0.8, 0.5, 3) # should already be adjusted for temporal discounting. Estimated from Shrestha et al Step change model with one symptomatic or asympatomic case removed at present day. 
+params$downstream_cases <- c(0.9, 0.4, 2) # Estimated from Shrestha et al Step change model with one symptomatic or asympatomic case removed at present day. 
+params$downstream_timing <- c(8, 2, 20) # Median time to downstream cases. Will apply time series discounting to exponential decay. 
 
 
 # Second block of params, needed for time course
@@ -51,7 +52,7 @@ params$duration_transmission_covarying_cv <- c(1, 0.5, 1.5)
 
 
 paramdf <- as.data.frame(t(as.data.frame(params)))
-colnames(paramdf) <- c("mid","low","high")
+colnames(paramdf) <- c("mid", "low", "high")
 paramdf$param <- rownames(paramdf)
 
 write.csv(paramdf, file="DALY_model_param_values.csv")

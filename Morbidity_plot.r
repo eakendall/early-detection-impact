@@ -1,3 +1,7 @@
+library(tidyverse)
+library(ggpubr)
+library(ggbrace)
+
 # Make an illustrative figure of the morbidity of TB over time
 # X axis is "Time with TB (arbitrary scale)"
 # Y axis is "Symptom severity (arbitrary scale)"
@@ -16,9 +20,7 @@ symptom_data <- data.frame(time, symptoms)
 thresholds <- c(0.2, 0.45, 0.7)
 
 # Make the plot using ggplot2
-library(ggplot2)
-library(ggpattern)
-ggplot(symptom_data) + geom_area(aes(x = time, y = symptoms), fill = "cadetblue1") +
+fig1 <- ggplot(symptom_data) + geom_area(aes(x = time, y = symptoms), fill = "cadetblue1") +
   geom_hline(yintercept = thresholds, linetype = "dashed") +
     # fill in the area that's below the curve but above the lowest threshold, in red
     geom_ribbon(data = symptom_data %>% filter(symptoms>thresholds[1]), aes(x = time, ymax = symptoms, ymin=thresholds[1]), fill = "cadetblue2") +
@@ -30,4 +32,28 @@ ggplot(symptom_data) + geom_area(aes(x = time, y = symptoms), fill = "cadetblue1
     annotate("text", x = 0.1, y = thresholds[3] + 0.01, label = "Severe symptoms", hjust = 0, vjust = 0) +
   theme_minimal() +
   labs(x = "Time (arbitrary scale)", y = "Symptom severity (arbitrary scale)", title = "Illustrative TB disease course") + 
-    theme(axis.text = element_blank())
+    theme(axis.text = element_blank()) 
+  
+
+
+fig1 + 
+  geom_bracket(
+    xmin = time[which.min(symptoms<thresholds[3])], 
+    xmax = 1, y.position = 1,
+    label = "Duration of severe disabiity") + 
+  geom_bracket(
+    xmin = time[which.min(symptoms<thresholds[1])], 
+    xmax = 1, y.position = 1.1,
+    label = "Duration of symptomatic TB") + 
+  stat_brace(data = symptom_data %>% 
+                     filter(symptoms > thresholds[1]) %>%
+                     mutate(symptomatic = "Cumulative TB morbidity"),
+            aes(x = time, y = symptoms), 
+            color="black", rotate=90, bending = 0.05, width = 0.05) +
+  annotate("text", x = 1.15, y = 0.65, label = "Cumulative\nTB morbidity", hjust = 1, vjust = 1, angle=45)
+  # stat_bracetext(data = symptom_data %>% 
+  #                    filter(symptoms > thresholds[1]) %>%
+  #                    mutate(symptomatic = "Cumulative TB morbidity"),
+  #           aes(x = time, y = symptoms, color=symptomatic, label=symptomatic),
+  #           size=6, angle=15, color="black", rotate=90, width = 0.05)
+  
