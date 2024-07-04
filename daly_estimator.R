@@ -19,7 +19,7 @@ dalys_per_average_case <- function(estimates = midpoint_estimates, plot = FALSE)
   transmission_average_case <-
     downstream_cases *
     (mortality_average_case + morbidity_average_case + sequelae_average_case) *
-    ((1-discounting_rate)^(downstream_timing))
+    ((1 - discounting_rate)^(downstream_timing))
   
   
   # output a dataframe with the different components, classified as "cumulative" (vs averted) dalys for hte "average" (vs detected) case
