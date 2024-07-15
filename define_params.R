@@ -3,7 +3,7 @@ params <- list()
 # First block of params, needed for averages
 
 ## TB morbidity
-params$tb_symptom_duration <- c(2/12, 1/12, 3/12) #retrospective symptom reporting of ~90 days, not all as severe as basis for IHME DW estimate #nolint
+params$tb_symptom_duration <- c(3/12, 1/12, 5/12) #retrospective symptom reporting of ~120 days, not all as severe as basis for IHME DW estimate #nolint
 params$tb_symptom_dw <- c(0.35, 0.2, 0.6) # IHME 0.33 for HIV-, 0.41 for HIV+
 
 ## TB mortality
@@ -12,7 +12,7 @@ params$tb_death_yearslost <- c(15, 5, 30) # average age at TB death ~55, remaini
 params$discounting_rate <- c(0.03, 0.0, 0.07) # determines weight of future post-TB and transmission DALYs
 
 ## Sequelae
-params$posttb_symptom_duration <- c(25, 10, 40) # total post-TB survival. Average age ~40 and life expectancy ~65?.
+params$posttb_symptom_duration <- c(25, 10, 35) # total post-TB survival. Average age ~40 and life expectancy ~65?.
 params$posttb_symptom_dw <- c(0.03, 0.01, 0.10) # disability weight averaged over all post-TB survival, 0.035 per Menzies et al 2021. Corresponds to 20% prevalence of mild (DW 0.02), 5% of moderate (DW 0.2), and 5% of severe (DW 0.4) COPD, for example. # nolint
 params$posttb_cfr <- c(0.05, 0.02, 0.15) # menzies paper, average 1.14x RR of mortality ==> ~.14/1.14=12% of TB survivors die of post-TB sequelae. But this seems high. # nolint
 params$posttb_death_yearslost <- c(15, 5, 30) # similar to YLL from TB deaths, beacuse occur on a delay but also in people who were younger when they developed TB?

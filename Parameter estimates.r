@@ -24,3 +24,26 @@ sum(tb_ages[1:5])/sum(tb_ages)
 # so the median is in the 5th age group, 35-44
 sum(unlist(tb_ages %>% ungroup())*age_medians)/sum(unlist(tb_ages %>% ungroup()))
 # and mean is ~39.
+
+
+# TB case fatality ratio by HIV status
+incidence <- 10600000
+hivpos_incidence <- 703000
+hivneg_incidence <-  incidence - hivpos_incidence
+
+hivneg_deaths <- 1380000
+hivpos_deaths <- 187000
+
+(cfr_hivpos <- hivpos_deaths/hivpos_incidence)
+(cfr_hivneg <- hivneg_deaths/hivneg_incidence)
+# https://www.who.int/teams/global-tuberculosis-programme/tb-reports/global-tuberculosis-report-2022/tb-disease-burden/2-2-tb-mortality
+# https://www.who.int/teams/global-tuberculosis-programme/tb-reports/global-tuberculosis-report-2022/tb-disease-burden/2-1-tb-incidence
+
+
+# Health life expectancy at age 40, globally
+lifetable <- read.csv("region_life_tables.csv")
+lifetable %>% 
+    filter(Period == 2019,
+           Dim2ValueCode == "AGEGROUP_AGE40-44",
+           Indicator == "ex - expectation of life at age x") %>%
+    select(Location, Value)
