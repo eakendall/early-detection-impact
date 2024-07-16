@@ -178,20 +178,29 @@ plot_time_course <- function(within_case = NULL, estimates = midpoint_estimates)
      annotate("segment", x = 0.04, y = max(rect_points_stacked$y3), xend = 1, yend = max(rect_points_stacked$y3), 
          linejoin = "mitre", linewidth = 5, color = "gray40",
          arrow = arrow(type = "closed", length = unit(0.01, "npc"))) +
-    annotate("text", x = 0.08, y = max(rect_points_stacked$y3), label = "More likely to intercept", color = "white", 
+    annotate("text", x = 0.08, y = max(rect_points_stacked$y3), label = "More likely to avert", color = "white", 
          hjust = 0, size = 3) + 
 
     annotate("segment", x = -0.04, y = max(rect_points_stacked$y3), xend = -1, yend = max(rect_points_stacked$y3), 
          linejoin = "mitre", linewidth = 5, color = "gray40",
          arrow = arrow(type = "closed", length = unit(0.01, "npc"))) +
-    annotate("text", x = -0.08, y = max(rect_points_stacked$y3), label = "Less likely to intercept", color = "white", 
+    annotate("text", x = -0.08, y = max(rect_points_stacked$y3), label = "Less likely to avert", color = "white", 
          hjust = 1, size = 3)
 
       
     return(time_course_plot)
 }
 
-
+# For manuscript, add lines showing potential timing of detection
+fig3 <- plot_time_course() + 
+  geom_vline(xintercept = 2/3, linetype = "dashed") + 
+  geom_vline(xintercept = -2/3, linetype = "dotted") + 
+  geom_vline(xintercept = 0, linetype = "dotdash") + 
+  theme(legend.background = element_rect(fill = "white"),
+          axis.title.y = element_text(vjust=-25),
+          axis.title =  element_text(face = 'bold')) + 
+  ggtitle("")
+  
 
 # As three vertically arranged panels, 
 # Plot the distubion of probabilities of detection during cross-section screening 
