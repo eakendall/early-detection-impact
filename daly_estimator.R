@@ -68,11 +68,11 @@ within_case_cumulative_and_averted <- function(averages = NULL, proportions = NU
 {
   if(missing(averages)) averages <- dalys_per_average_case(estimates)
   if(missing(proportions)) proportions <- within_case_avertible(estimates)
-  averages_and_avertibles <- rbind(averages, 
+  averages_and_avertibles <- rbind(averages,
                                    averages %>%
              mutate(cumulative_or_averted = "averted",
-             value = value * case_when(name=="transmission" ~ proportions$average_proportion_avertible_transmission,
-                                      TRUE ~ proportions$average_proportion_avertible_mm)))
+             value = value * case_when(name == "transmission" ~ proportions$average_proportion_avertible_transmission,
+                                       TRUE ~ proportions$average_proportion_avertible_mm)))
   
   return(averages_and_avertibles)
   
@@ -83,26 +83,12 @@ within_case_cumulative_and_averted <- function(averages = NULL, proportions = NU
 #### Differences between detected and not detected cases ####
 between_case_differences <- function(estimates = midpoint_estimates)
 {
-  # estimates$duration_tbdeath_covarying_cv = (covariance / duration_cv) assuming correlation of 1
-  covariance_mortality_duration <- estimates$duration_tbdeath_covarying_cv * estimates$duration_cv
-  covariance_transmission_duration <- estimates$duration_transmission_covarying_cv * estimates$duration_cv
-
-  # We're defining these on relative scales, so among all incident TB, E[D] = E[M] = E[T] = 1.
-  # We have joint distributions f[D,T] and f[D,M]. 
-  # The covariance between D and T is integral dD dT (D-E[D])(T-E[T]) f[D,T] = integral dD dT (f D T - f D - f T + f) = 
-  # integral dD dT f D T - integral dT (integral dD D f) - integral dD (integral dT T f) + integral dD dT f  = 
-  # integral dD dT f D T - integral dT (E[D]) - integral dD (E[T]) + 1  = 
-  # integral dD dT f D T - integral dT 1 - integral dD 1 + 1  = 
-  # integral dD dT f D T - 1 - 1 + 1 
-
-  # And the quantity we want it the expected value of T when weighted by D, i.e. 
-  # integral dD dT f D T = cov(D,T) + 1. 
-
-  # So we can just use the covariance plus 1 as the expected value of T when sampling by D.
-
   return(list(
-    "avertible_mortality_multiplier_detected" = covariance_mortality_duration + 1,
-    "avertible_transmission_multiplier_detected" = covariance_transmission_duration + 1))
+    "avertible_mortality_multiplier_detected" = 
+      estimates$duration_cv ^ estimates$duration_tbdeath_power_relationship
+ ,
+    "avertible_transmission_multiplier_detected" = 
+      estimates$duration_cv ^ estimates$duration_transmission_power_relationship))
 }
 
 #### Put it all together #####

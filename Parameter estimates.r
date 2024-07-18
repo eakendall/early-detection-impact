@@ -47,3 +47,17 @@ lifetable %>%
            Dim2ValueCode == "AGEGROUP_AGE40-44",
            Indicator == "ex - expectation of life at age x") %>%
     select(Location, Value)
+
+
+# Estimated rate of TB incidence decline by country
+tb_burden_estimates <- read.csv("TB_burden_countries_2024-06-25.csv")
+trends <- tb_burden_estimates %>% filter(year > 2015) %>% 
+       group_by(country) %>%
+       filter(max(e_inc_100k)>100) %>%
+       summarise(data = list(cur_data_all()),
+                 models = list(lm(e_inc_100k ~ year, data = data[[1]])))
+rates <- lapply(trends$models,
+              # get the rate of change relative to the 2021 value
+              function(model) coef(model)[2]/predict(model, data.frame(year = 2021)))
+summary(unlist(rates))
+# IQR -0-4% per year

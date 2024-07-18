@@ -173,10 +173,10 @@ tabPanel("Total DALYs per average TB case",
                   slider_input_from_file("duration_cv", "Coefficient of variation in TB duration (in absence of ACF)")
                 ),
                 accordion_panel("Covariance of outcomes with duration",
-                  slider_input_from_file("duration_tbdeath_covarying_cv",
-                                    "How mortality risk co-varies with duration"),
-                  slider_input_from_file("duration_transmission_covarying_cv",
-                                    "How cumulative transmission co-varies with duration")
+                  slider_input_from_file("duration_tbdeath_power_relationship",
+                                    "How mortality risk varies with duration"),
+                  slider_input_from_file("duration_transmission_power_relationship",
+                                    "How cumulative transmission varies with duration")
                 )
               )
             ),
@@ -245,8 +245,8 @@ server <- function(input, output) {
   sliderValues3 <- reactive({
     list(
       duration_cv = input$duration_cv,
-      duration_tbdeath_covarying_cv = input$duration_tbdeath_covarying_cv,
-      duration_transmission_covarying_cv = input$duration_transmission_covarying_cv
+      duration_tbdeath_power_relationship = input$duration_tbdeathpower_relationship,
+      duration_transmission_power_relationship = input$duration_transmission_power_relationship
     )
   })
 
@@ -287,13 +287,13 @@ server <- function(input, output) {
     output_table(dalys_averted_per_case_detected(), forsummary = 0)})
 
     output$results_table_forsummary1 <- renderText({
-    output_table(dalys_averted_per_case_detected(), forsummary = 1)})
+    output_table(dalys_averted_per_case_detected(), forsummary = 0)})
 
     output$results_table_forsummary2 <- renderText({
-    output_table(dalys_averted_per_case_detected(), forsummary = 2)})
+    output_table(dalys_averted_per_case_detected(), forsummary = 0)})
 
     output$results_table_forsummary3 <- renderText({
-    output_table(dalys_averted_per_case_detected(), forsummary = 3)})
+    output_table(dalys_averted_per_case_detected(), forsummary = 0)})
 
   output$averages_plot_with_averted <- renderPlot(
     plot_averted_portion(dalys_averted_per_case_detected(),
