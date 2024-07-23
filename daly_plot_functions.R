@@ -6,6 +6,10 @@ library(gridExtra)
 library(kableExtra)
 library(ggpattern)
 library(magick)
+library(MASS)
+library(conflicted)
+conflicted::conflict_prefer(name = "select", winner = "dplyr")
+conflicted::conflict_prefer(name = "filter", winner = "dplyr")
 
 plot_averages <- function(output_dalys_per_average_case = NULL, 
                           input_first_block = midpoint_estimates, 
@@ -236,13 +240,14 @@ plot_heterogeneity <- function(estimates = midpoint_estimates,
 
   simulate_correlated_variables <- function(covarianceA, covarianceB, sigma11 = NULL)
   { 
-    if (covarianceA > exp(1) | covarianceA < -1/exp(1)) stop("Covariance must be between -1/e and e for this illustration using log-normals to work, although our DALY model is valid from -1 to infinity.")
+    if (covarianceA < -1/exp(1)) stop("Covariance must be at least -1/e this illustration using log-normals to work, although our DALY model is valid for covariances from -1 to infinity.")
 
     if(missing(sigma11)) sigma11 <- max(ceiling(sqrt(abs(covarianceA))),
-                                        ceiling(sqrt(abs(covarianceB))))
+                                        ceiling(sqrt(abs(covarianceB))),
+                                        0.2)
     
-    sigma22A <- ceiling((abs(covarianceA)/sigma11))
-    sigma22B <- ceiling((abs(covarianceB)/sigma11))
+    sigma22A <- max(ceiling(abs(covarianceA)/sigma11),0.2)
+    sigma22B <- max(ceiling(abs(covarianceB)/sigma11),0.2)
     sigma12A <- log(covarianceA^2 + 1)
     sigma12B <- log(covarianceB^2 + 1)
     mu1 <- -1/2 * sigma11
@@ -261,32 +266,26 @@ plot_heterogeneity <- function(estimates = midpoint_estimates,
 
   # choose a sigma_11 for duration that works for both covariances:
   sigma_duration <- max(ceiling(sqrt(abs(estimates$covariance_mortality_duration))),
-                        ceiling(sqrt(abs(estimates$covariance_transmission_duration))))
+                        ceiling(sqrt(abs(estimates$covariance_transmission_duration))),
+                        0.2)
 
   # change any out-of-range covariances to 0 and generate error flag
   covarianceA <- estimates$covariance_mortality_duration
-  if (covarianceA > exp(1) | covarianceA < -1/exp(1))
+  if (covarianceA < -1/exp(1))
   {
-    covarianceA <- 0
+    covarianceA <- -1/exp(1)
     error_flag_mortality <- 1
   } else error_flag_mortality <- 0
   
   covarianceB <- estimates$covariance_transmission_duration
-  if (covarianceB > exp(1) | covarianceB < -1/exp(1))
+  if (covarianceB < -1/exp(1))
   {
-    covarianceB <- 0
+    covarianceB <- -1/exp(1)
     error_flag_transmission <- 1
   } else error_flag_transmission <- 0
 
   MVN <- simulate_correlated_variables(covarianceA, covarianceB, sigma_duration)
 
-  errorplot <- ggplot(data=NULL, aes(x=NULL, y=NULL)) + 
-    ggtitle("This illustration with log-normal distributions is not possible\n
-    for covariances less than -1/e ~ -0.37\n
-    (but our DALY model is valid down to covariances of -1)") +
-    theme_void()
-
-  if(error_flag_mortality) scatter1 <- errorplot else
   scatter1 <- 
     ggplot(data=MVN, aes(x=Y1, y=Y2)) + 
     geom_point(alpha=0.3, shape=16)  + 
@@ -303,10 +302,15 @@ plot_heterogeneity <- function(estimates = midpoint_estimates,
     ylab("Relative DALYs\nfrom TB mortality") +
     xlim(0, quantile(MVN[,"Y1"], 0.99)) +
     ylim(0, quantile(MVN[,"Y2"], 0.99))
+
+  if(error_flag_mortality) scatter1 <- scatter1 +
+  # add text on top of plot
+    annotate(geom = "text", x = 1.1, y = 1.1,
+      label = "Covariance too low for\nillustration with lognormals\n(but still valid for DALY model)",
+      angle = 0, hjust = 0, vjust = 0, size=6, fontface="bold")
     
-    if(error_flag_transmission) scatter2 <- errorplot else
-    scatter2 <- 
-      ggplot(data=MVN, aes(x=Y1, y=Y3)) + 
+  scatter2 <- 
+    ggplot(data=MVN, aes(x=Y1, y=Y3)) + 
     geom_point(alpha=0.3, shape=16)  + 
     geom_rug(col=rgb(.5,0,0,alpha=.2)) + 
     theme_minimal() +
@@ -324,9 +328,15 @@ plot_heterogeneity <- function(estimates = midpoint_estimates,
     xlim(0, quantile(MVN[,"Y1"], 0.99)) +
     ylim(0, quantile(MVN[,"Y3"], 0.99))
 
-  # Arrange the two figures in a column
+  if(error_flag_transmission) scatter2 <- scatter2 + 
+  # add text on top of plot
+    annotate(geom = "text", x = 1.1, y = 1.1, 
+      label = "Covariance too low for\nillustration with lognormals\n(but still valid for DALY model)",
+      angle = 0, hjust = 0, vjust = 0, size=6, fontface="bold")
 
-  return(grid.arrange(scatter1, scatter2, ncol=1))
+  # Arrange the two figures in a column, with transmission first
+
+  return(grid.arrange(scatter2, scatter1, ncol=1))
 
 }
 
@@ -467,3 +477,5 @@ plot_averted_portion <- function(output, ymax = NULL, base = "detected")
                                               
  return(plot)
 }
+
+plot_averted_portion()

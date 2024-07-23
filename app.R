@@ -39,14 +39,15 @@ ui <- bslib::page_navbar(
       font-family: Arial; 
       font-size: 12px; 
       # font-style: italic; }'
-    )),
+    )
+  ),
 
   collapsible = TRUE,
 
-tabPanel("Total DALYs per average TB case",
-  # organize as 4 navbarPages, for the three input sections plus the final results
-  # within each tabPanel, include a results card
-  layout_columns(
+  tabPanel("Total DALYs per average TB case",
+    # organize as 4 navbarPages, for the three input sections plus the final results
+    # within each tabPanel, include a results card
+    layout_columns(
       col_widths = c(9,3),
       card(
         sidebarLayout(
@@ -86,7 +87,7 @@ tabPanel("Total DALYs per average TB case",
               accordion_panel(
               title = "Temporal discounting",
               slider_input_from_file("discounting_rate", "Annual discounting rate",
-                                      step = 0.005)
+                                     step = 0.005)
               ),
             )
           ),
@@ -104,7 +105,7 @@ tabPanel("Total DALYs per average TB case",
   ), # end tabPanel
   tabPanel("Timing of DALY accrual",
     card(
-       max_height = 250,
+      max_height = 250,
       full_screen = TRUE,
       card_header("Overview of DALY accrual portion of model"),
       p("Disease in the present may increase the risk of future morbidity, mortality, and secondary cases. 'Accrual' refers to whenfuture DALYs become inevitable, even if they haven't yet occurred."),
@@ -160,6 +161,15 @@ tabPanel("Total DALYs per average TB case",
     ) # end layout_columns
   ), # end tabPanel
   tabPanel("Average vs detected cases",
+    card(
+      min_height = 100,
+      max_height = 250,
+      full_screen = TRUE,
+      card_header("Overview of heterogeneity portion of model"),
+      p("Individuals who are detected through screening may have different disease courses than those who are not. This section models the differences between the two groups."),
+      p("Individuals who are detectable for longer (prior to routine diagnosis, death, or spontaneous resolution) are more likely to be detected through screening. These same individuals may generate more cumulative transmission, whereas those with more rapidly progressive disease and shorter duration may be at higher risk for mortality."),
+      p("These relationships are parametrized as covariances. For illustrative purposes, they are simulated here assuming log-normal distributions of duration, transmission, and mortality; the model used for DALY impact estimation is more general, however.")
+    ),
     # within each tabPanel, include a results card
     layout_columns(
       col_widths = c(9,3),
@@ -168,20 +178,22 @@ tabPanel("Total DALYs per average TB case",
           sidebarPanel(
             width = 5,
             style = "height: 90vh; overflow-y: auto;",
-              accordion(
-                accordion_panel("Covariance of outcomes with duration",
-                  slider_input_from_file("covariance_mortality_duration",
-                                    "Mortality-duration covariance"),
-                  slider_input_from_file("covariance_tranmsission_duration",
-                                    "Transmission-duration covariance")
-                )
+            accordion(
+              accordion_panel("Duration and Transmission",
+                slider_input_from_file("covariance_transmission_duration",
+                                  "Transmission-duration covariance", step = 0.1)
+              ),
+              accordion_panel("Duration and mortality",
+                slider_input_from_file("covariance_mortality_duration",
+                                  "Mortality-duration covariance")
               )
-            ),
-            mainPanel(
-              width = 7, 
-              plotOutput("heterogeneity_plot", height = "900px")
             )
-          ) # end sidebarLayout
+          ), # end sidebarPanel
+          mainPanel(
+            width = 7,
+            plotOutput("heterogeneity_plot", height = "900px")
+          )
+        ) # end sidebarLayout
       ), # end main card
       card(
         card_header("Results summary"),
@@ -200,7 +212,7 @@ tabPanel("Total DALYs per average TB case",
       column(width = 4,
         plotOutput("averted_plot")
       )
-    ) 
+    )
   )
 ) # end ui
 
@@ -241,8 +253,8 @@ server <- function(input, output) {
   # Create a reactive list of all slider input values for third block
   sliderValues3 <- reactive({
     list(
-      covariance_mortality_duration = input$covariance_mortality_duration,
       covariance_transmission_duration = input$covariance_transmission_duration,
+      covariance_mortality_duration = input$covariance_mortality_duration
     )
   })
 
