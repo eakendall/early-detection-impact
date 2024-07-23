@@ -43,7 +43,7 @@ params$second_half_vs_first_transmission <- c(0.67, 0.5, 0.75)
 
 # Third block of params, needed for differences beween average and detected cases
 
-params$covariance_mortality_duration <- c(-0.5, -1, 0) # E.g. -0.5 could correspond to CV of 1 for both, and correlation of -0.5. Or CV of 1 for duration and 2 for mortality, and correlation of -0.25. If HIV+ = 2x risk of death, and 1/2 the duration, with cvs of 1, ...
+params$covariance_mortality_duration <- c(-0.1, -0.5, 0) # E.g. -0.5 could correspond to CV of 1 for both, and correlation of -0.5. Or CV of 1 for duration and 2 for mortality, and correlation of -0.25. If HIV+ = 2x risk of death, and 1/2 the duration, with cvs of 1, ...
 params$covariance_transmission_duration <- c(1, 0.5, 1.5)
 
 

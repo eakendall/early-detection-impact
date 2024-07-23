@@ -61,3 +61,26 @@ rates <- lapply(trends$models,
               function(model) coef(model)[2]/predict(model, data.frame(year = 2021)))
 summary(unlist(rates))
 # IQR -0-4% per year
+
+
+
+# Covariance, mortality and duration
+# If HIV+ = 2x risk of death, and 1/2 the duration, with cvs of 1, ...
+# Model relative duration as gamma with CV of 1:
+duration <- rgamma(10000, 1,1)
+mean(duration)
+sd(duration)
+# Compare the upper half of duration to lower half of duration -- too much.
+mean(duration[duration > median(duration)])/mean(duration[duration < median(duration)])
+# if HIV+ is half the duration on average, and HIV is imperfectly correlated with duration:
+# Assign simulated HIV Status such that mean duration of HIV+ is 2x mean duration of HIV-
+hiv_status <- rbinom(n=10000, size=1, prob=1/(1.15+duration))
+mean(duration[hiv_status == 1])/mean(duration[hiv_status == 0])
+# And simulate mortality risk as 2x greater for HIV+, but also on a relative scale with mean of 1:
+mortality <- inv.logit(rnorm(10000, -2+hiv_status, 1))
+mortality <- mortality/mean(mortality)
+mean(mortality)
+sd(mortality)
+mean(mortality[hiv_status == 1])/mean(mortality[hiv_status == 0])
+# And then calculate the covariance between the two
+cor(duration, mortality) * sd(duration) * sd(mortality)

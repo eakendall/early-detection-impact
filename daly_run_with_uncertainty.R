@@ -4,7 +4,8 @@ library(sensitivity) #prcc
 library(clipr)
 library(lhs)
 library(abind)
-
+library(kableExtra)
+library(gridExtra)
 
 source("daly_estimator.R")
 daly_estimator()
