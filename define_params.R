@@ -43,10 +43,8 @@ params$second_half_vs_first_transmission <- c(0.67, 0.5, 0.75)
 
 # Third block of params, needed for differences beween average and detected cases
 
-params$duration_cv <- c(1.0,0.5, 1.5) # we will simulate gamma distribution of durations, with this coefficient of variation
-
-params$duration_tbdeath_power_relationship <- c(-1, -1.5, 0) # in the direction of correlation, how spread is tbdeath risk relative to duration (and is the correlation positive or negative). A value of 1 or -1 means positive or negative corelations, respectively, with the average mortaity at a given duration equal to the duration. Less than 1 means less spread, >1 means more spread than duration. 
-params$duration_transmission_power_relationship <- c(1, 0.5, 1.5)
+params$covariance_mortality_duration <- c(-0.5, -1, 0) # E.g. -0.5 could correspond to CV of 1 for both, and correlation of -0.5. Or CV of 1 for duration and 2 for mortality, and correlation of -0.25. If HIV+ = 2x risk of death, and 1/2 the duration, with cvs of 1, ...
+params$covariance_transmission_duration <- c(1, 0, 2)
 
 
 paramdf <- as.data.frame(t(as.data.frame(params)))
@@ -80,5 +78,7 @@ nicenames <- list(
     "second_half_vs_first_mm" = "Late-detectable-period morbidity and mortality",
     "second_half_vs_first_transmission" = "Late-detectable-period transmission",
     "duration_cv" = "Disease duration heterogeneity",
-    "duration_tbdeath_power_relationship" = "Mortality-duration relationship",
-    "duration_transmission_power_relationship" = "Transmission-duration relationship")
+    "mortality_cv" = "Mortality risk heterogeneity",
+    "transmission_cv" = "Transmission heterogeneity",
+    "covariance_mortality_duration" = "Mortality-duration covariance",
+    "covariance_transmsission_duration" = "Transmission-duration covariance")

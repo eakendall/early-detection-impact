@@ -83,13 +83,29 @@ within_case_cumulative_and_averted <- function(averages = NULL, proportions = NU
 #### Differences between detected and not detected cases ####
 between_case_differences <- function(estimates = midpoint_estimates)
 {
+  # New plan: If we specify the covariance (which includes the correlation and the coefficients of variation), then things are simple. But users need to know how to interpret covariance, so we can provide an illustration for specified duration_cv and correlation. 
+  # covariance = correlation * duration_cv * mortality_cv (or transmission_cv)
+
+  # We're defining these on relative scales, so among all incident TB, E[D] = E[M] = E[T] = 1.
+  # We have joint distributions f[D,T] and f[D,M]. 
+  # The covariance between D and T is integral dD dT (D-E[D])(T-E[T]) f[D,T] = integral dD dT (f D T - f D - f T + f) = 
+  # integral dD dT f D T - integral dT (integral dD D f) - integral dD (integral dT T f) + integral dD dT f  = 
+  # integral dD dT f D T - integral dT (E[D]) - integral dD (E[T]) + 1  = 
+  # integral dD dT f D T - integral dT 1 - integral dD 1 + 1  = 
+  # integral dD dT f D T - 1 - 1 + 1 
+
+  # And the quantity we want is the expected value of T when weighted by D, i.e. 
+  # integral dD dT f D T = cov(D,T) + 1. 
+
+  # So we can just use the covariance plus 1 as the expected value of T when sampling by D.
+
   return(list(
-    "avertible_mortality_multiplier_detected" = 
-      estimates$duration_cv ^ estimates$duration_tbdeath_power_relationship
- ,
-    "avertible_transmission_multiplier_detected" = 
-      estimates$duration_cv ^ estimates$duration_transmission_power_relationship))
+    "avertible_mortality_multiplier_detected" = covariance_mortality_duration + 1,
+    "avertible_transmission_multiplier_detected" = covariance_transmission_duration + 1))
 }
+
+
+
 
 #### Put it all together #####
 daly_estimator <- function(within_case = NULL,

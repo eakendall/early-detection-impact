@@ -216,83 +216,117 @@ solve_for_gamma_parameters <- function(mean, sd)
   return(list("shape" = shape, "scale" = scale))
 }
 
+# Illustrate covariance, assuming lognormal distirubtions with similar coefficient of variation for duration and mortality (and duration and transmission), and specified covariances.
 plot_heterogeneity <- function(estimates = midpoint_estimates,
                                N = 500) # just for visualization, too few for stable estimates
 {
-  qs <- runif(N, 0, 1)
-  qs_mort <- qs_trans <- qs
-  if (estimates$duration_tbdeath_covarying_cv < 0) qs_mort <- 1 - qs
-  if (estimates$duration_transmission_covarying_cv < 0) qs_trans <- 1 - qs
-
-  relative_durations <-  qgamma(p = qs,
-                                shape = (solve_for_gamma_parameters(mean = 1, sd = estimates$duration_cv))[['shape']],
-                                scale = (solve_for_gamma_parameters(mean = 1, sd = estimates$duration_cv))[['scale']])
-    
-  relative_dalys_mortality <-
-    qgamma(p = qs_mort,
-           shape=(solve_for_gamma_parameters(
-                    mean = 1,
-                    sd = estimates$duration_cv * abs(estimates$duration_tbdeath_covarying_cv)))[['shape']],
-           scale=(solve_for_gamma_parameters(
-                    mean = 1,
-                    sd = estimates$duration_cv * abs(estimates$duration_tbdeath_covarying_cv)))[['scale']])
-  relative_dalys_mortality_withnoise <-
-      rnorm(N, mean = relative_dalys_mortality, sd = 0.2 * relative_dalys_mortality)
   
-  relative_dalys_transmission <- qgamma(p = qs_trans,
-                                        shape=(solve_for_gamma_parameters(mean=1, sd=estimates$duration_cv*abs(estimates$duration_transmission_covarying_cv)))[['shape']],
-                                        scale=(solve_for_gamma_parameters(mean=1, sd=estimates$duration_cv*abs
-                                        (estimates$duration_transmission_covarying_cv)))[['scale']]) 
-  relative_dalys_transmission_withnoise <- 
-      rnorm(N, mean = relative_dalys_transmission, sd = 0.2 * relative_dalys_transmission)
-    
-# Start first of three ggplot figures to be arranged in a column of panels
-figure1 <- ggplot(as_tibble(relative_durations)) + 
-  geom_density(aes(x=value), fill="blue", alpha=0.5) +
-  xlim(0, quantile(relative_durations, 0.999)) +
-  theme_minimal() +
-  ggtitle("Distribution of disease duration") +
-   theme(axis.text.y = element_blank(), plot.margin = margin(10, 10, 10, 10),
-          axis.title = element_text(size = 14),
-          axis.text.x = element_blank()) + 
-    geom_vline(xintercept = 1, linetype = "dashed") + 
-    # label the line as the mean duration of detectable period
-    annotate(geom = "text", x = 1, y = 0.1, label = "Mean duration of detectable period", angle = 90, hjust = 0, vjust = -1)
-
+  #  Y = exp(X) where X ~ N(mu, sigma)
+  #  E[Y]_1 = 1 = exp(mu_1 + 1/2 sigma_11) ==> mu_1 + 1/2 sigma_11 = 0 ==> mu_1 = -1/2 sigma_11
+  #  E[Y]_2 = 1 = exp(mu_2 + 1/2 sigma_22) ==> mu_2 = -1/2 sigma_22
+  # cov_12^2 = cov_21^2 = exp(mu_1 + mu_2 + 1/2 sigma_11 + 1/2 sigma_jj) (exp(sigma_12) - 1) = 
+  #  1*1*(exp(sigma_12) - 1) = exp(sigma_12) - 1 ==> 
+  #  sigma_12 = log(cov_12^2 + 1)
   
-# Now scatter plot of relative durations vs relative DALYs for mortality
-figure2 <- ggplot(as_tibble(cbind(relative_durations, relative_dalys_mortality_withnoise))) + 
-  geom_point(aes(x=relative_durations, y=relative_dalys_mortality_withnoise), size=1) +
-  xlim(0, quantile(relative_durations, 0.999)) +
-  theme_minimal() + 
-  labs(x = NULL, y = "Relative DALYs\nfrom TB mortality") +
-  theme(plot.margin = margin(10, 10, 10, 10),
-        axis.title = element_text(size = 14),
-           axis.text = element_blank()) + 
-    geom_vline(xintercept = 1, linetype = "dashed") +
+  #  and we can choose nearly any sigma_ii's we want here. 
+  # Suppose we choose sigma_11 = sigma_22 = 1.
+  #  then m_1 = m_2 = -1/2, and sigma_12 = log(cov_12^2 + 1)
+  # If sigma_11 = sigma_22 = 1. then correlation = covariance, and max cov is 1. 
+  #  So let's set sigma_ii to ceiling(sqrt(covariance)) when cov is positive.
+
+  simulate_correlated_variables <- function(covarianceA, covarianceB, sigma11 = NULL)
+  { 
+    if (covarianceA > exp(1) | covarianceA < -1/exp(1)) stop("Covariance must be between -1/e and e for this illustration using log-normals to work, although our DALY model is valid from -1 to infinity.")
+
+    if(missing(sigma11)) sigma11 <- max(ceiling(sqrt(abs(covarianceA))),
+                                        ceiling(sqrt(abs(covarianceB))))
+    
+    sigma22A <- ceiling((abs(covarianceA)/sigma11))
+    sigma22B <- ceiling((abs(covarianceB)/sigma11))
+    sigma12A <- log(covarianceA^2 + 1)
+    sigma12B <- log(covarianceB^2 + 1)
+    mu1 <- -1/2 * sigma11
+    mu2A <- -1/2 * sigma22A 
+    mu2B <- -1/2 * sigma22B
+    sigma <- matrix(c(sigma11, sigma12A, sigma12B,  
+                      sigma12A, sigma22A, 0,
+                      sigma12B, 0, sigma22B), nrow=3)
+    mu <- c(mu1, mu2A, mu2B)
+    X <- mvrnorm(N, mu, sigma)
+    Y <- exp(X)
+    colnames(Y) <- c("Y1", "Y2", "Y3")
+          
+    return(Y)
+  }
+
+  # choose a sigma_11 for duration that works for both covariances:
+  sigma_duration <- max(ceiling(sqrt(abs(estimates$covariance_mortality_duration))),
+                        ceiling(sqrt(abs(estimates$covariance_transmission_duration))))
+
+  # change any out-of-range covariances to 0 and generate error flag
+  covarianceA <- estimates$covariance_mortality_duration
+  if (covarianceA > exp(1) | covarianceA < -1/exp(1))
+  {
+    covarianceA <- 0
+    error_flag_mortality <- 1
+  } else error_flag_mortality <- 0
+  
+  covarianceB <- estimates$covariance_transmission_duration
+  if (covarianceB > exp(1) | covarianceB < -1/exp(1))
+  {
+    covarianceB <- 0
+    error_flag_transmission <- 1
+  } else error_flag_transmission <- 0
+
+  MVN <- simulate_correlated_variables(covarianceA, covarianceB, sigma_duration)
+
+  errorplot <- ggplot(data=NULL, aes(x=NULL, y=NULL)) + 
+    ggtitle("This illustration with log-normal distributions is not possible\n
+    for covariances less than -1/e ~ -0.37\n
+    (but our DALY model is valid down to covariances of -1)") +
+    theme_void()
+
+  if(error_flag_mortality) scatter1 <- errorplot else
+  scatter1 <- 
+    ggplot(data=MVN, aes(x=Y1, y=Y2)) + 
+    geom_point(alpha=0.3, shape=16)  + 
+    geom_rug(col=rgb(.5,0,0,alpha=.2)) + 
+    theme_minimal() +
+    theme(axis.text.x = element_blank(), axis.text.y = element_blank()) +
     geom_hline(yintercept = 1, linetype = "dashed") +
-    # label the line as the mean duration of detectable period
-    annotate(geom = "text", y = 1, x = 0.9, label = "Mortality risk of the average case", angle = 0, hjust = -1, vjust = -1)
-
-# and vs relative DALYs for transmission
-figure3 <- ggplot(as_tibble(cbind(relative_durations, relative_dalys_transmission_withnoise))) + 
-  geom_point(aes(x=relative_durations, y=relative_dalys_transmission_withnoise), size = 1) +
-  xlim(0, quantile(relative_durations, 0.999)) +
-  theme_minimal() +
-  labs(x = "Relative duration \n(= relative probability of detection during ACF))", y = "Relative DALYs\nfrom transmission") +
-  theme(plot.margin = margin(10, 10, 10, 10),
-        # increase axis label size
-        axis.title = element_text(size = 14),
-        axis.text = element_blank()) + 
+    annotate(geom = "text", x = 1, y = 0.1, 
+      label = "Mean duration of detectable period", angle = 90, hjust = 0, vjust = -1) +
     geom_vline(xintercept = 1, linetype = "dashed") + 
-    geom_hline(yintercept = 1, linetype = "dashed") + 
-    # label the line as the mean duration of detectable period
-    annotate(geom = "text", y = 1, x = 0.9, label = "Transmission from the average case", angle = 0, hjust = -1, vjust = -1)
+    annotate(geom = "text", y = 1, x = 0.9, 
+      label = "Mortality of the average case", angle = 0, hjust = -1, vjust = -1) +
+    xlab("Relative duration \n(= relative probability of detection during ACF))") +
+    ylab("Relative DALYs\nfrom TB mortality") +
+    xlim(0, quantile(MVN[,"Y1"], 0.99)) +
+    ylim(0, quantile(MVN[,"Y2"], 0.99))
+    
+    if(error_flag_transmission) scatter2 <- errorplot else
+    scatter2 <- 
+      ggplot(data=MVN, aes(x=Y1, y=Y3)) + 
+    geom_point(alpha=0.3, shape=16)  + 
+    geom_rug(col=rgb(.5,0,0,alpha=.2)) + 
+    theme_minimal() +
+    theme(axis.text.x = element_blank(), axis.text.y = element_blank()) +
+    geom_hline(yintercept = 1, linetype = "dashed") +
+    # annotate(geom = "text", x = 1, y = 0.1,
+    #   label = "Mean duration of detectable period", angle = 90, hjust = 0, vjust = -1) +
+    geom_vline(xintercept = 1, linetype = "dashed") + 
+    annotate(geom = "text", y = 1, x = 0.9, 
+      label = "Transmission from the average case", angle = 0, hjust = -1, vjust = -1) +
+    xlab("Relative duration \n(= relative probability of detection during ACF))") +
+    ylab("Relative DALYs\nfrom transmission") + 
+    annotate(geom = "text", y = 1, x = 0.9, label = "Transmission from the average case", 
+      angle = 0, hjust = -1, vjust = -1) + 
+    xlim(0, quantile(MVN[,"Y1"], 0.99)) +
+    ylim(0, quantile(MVN[,"Y3"], 0.99))
 
+  # Arrange the two figures in a column
 
-# Arrange the three figures in a column
-
-return(grid.arrange(figure1, figure2, figure3, ncol=1))
+  return(grid.arrange(scatter1, scatter2, ncol=1))
 
 }
 

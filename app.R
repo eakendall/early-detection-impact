@@ -169,14 +169,11 @@ tabPanel("Total DALYs per average TB case",
             width = 5,
             style = "height: 90vh; overflow-y: auto;",
               accordion(
-                accordion_panel("Variance in disease duration",
-                  slider_input_from_file("duration_cv", "Coefficient of variation in TB duration (in absence of ACF)")
-                ),
                 accordion_panel("Covariance of outcomes with duration",
-                  slider_input_from_file("duration_tbdeath_power_relationship",
-                                    "How mortality risk varies with duration"),
-                  slider_input_from_file("duration_transmission_power_relationship",
-                                    "How cumulative transmission varies with duration")
+                  slider_input_from_file("covariance_mortality_duration",
+                                    "Mortality-duration covariance"),
+                  slider_input_from_file("covariance_tranmsission_duration",
+                                    "Transmission-duration covariance")
                 )
               )
             ),
@@ -244,9 +241,8 @@ server <- function(input, output) {
   # Create a reactive list of all slider input values for third block
   sliderValues3 <- reactive({
     list(
-      duration_cv = input$duration_cv,
-      duration_tbdeath_power_relationship = input$duration_tbdeathpower_relationship,
-      duration_transmission_power_relationship = input$duration_transmission_power_relationship
+      covariance_mortality_duration = input$covariance_mortality_duration,
+      covariance_transmission_duration = input$covariance_transmission_duration,
     )
   })
 
