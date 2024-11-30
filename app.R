@@ -80,9 +80,9 @@ ui <- bslib::page_navbar(
               accordion_panel(
                 title = "Transmission",
                 slider_input_from_file("downstream_cases",
-                                      "# of attributable downstream cases", step = 0.25),
+                                       "# of attributable downstream cases", step = 0.25),
                 slider_input_from_file("downstream_timing",
-                                      "Mean years to downstream cases")
+                                       "Mean years to downstream cases")
               ),
               accordion_panel(
               title = "Temporal discounting",
