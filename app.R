@@ -59,7 +59,7 @@ ui <- bslib::page_navbar(
               # multiple = TRUE,
               accordion_panel(
                 title = "TB morbidity",
-                slider_input_from_file("tb_symptom_duration", "Duration of symptomatic TB (years)"),
+                slider_input_from_file("tb_symptom_duration", "Duration of symptoms (years) per TB episode", step = 0.1),
                 slider_input_from_file("tb_symptom_dw", "Disability weight while symptomatic")
               ),
               accordion_panel(
@@ -69,8 +69,8 @@ ui <- bslib::page_navbar(
               ),
               accordion_panel(
                 title = "Sequelae",
-                slider_input_from_file("posttb_symptom_duration", "Time lived with TB sequelae (years)"),
-                slider_input_from_file("posttb_symptom_dw", "Disability weight during TB sequelae", step = 0.02),
+                slider_input_from_file("posttb_symptom_duration", "Time lived after TB (years)"),
+                slider_input_from_file("posttb_symptom_dw", "Average disability weight after TB", step = 0.02),
                 slider_input_from_file("posttb_cfr", "Post-TB fatality ratio 
                                       (proportion of all TB survivors who die early of TB sequelae)", step = 0.01),
                 slider_input_from_file("posttb_death_yearslost",
@@ -108,7 +108,7 @@ ui <- bslib::page_navbar(
       max_height = 250,
       full_screen = TRUE,
       card_header("Overview of DALY accrual portion of model"),
-      p("Disease in the present may increase the risk of future morbidity, mortality, and secondary cases. 'Accrual' refers to whenfuture DALYs become inevitable, even if they haven't yet occurred."),
+      p("Disease in the present may increase the risk of future morbidity, mortality, and secondary cases. 'Accrual' refers to when future DALYs become inevitable, even if they haven't yet occurred."),
       p("Some DALYs may accrue before TB becomes detectable through screening, or after it would be diagnosed through routine care even without screening. These will not be affected by early detection."),
       p("Within the detectable period, the rate of DALY accrual may increase over time as disease becomes more severe. Cross-sectional screening will intercept TB at a random point in its disease course and thus preferentially averts the proportion of DALYs that accrue later in the detectable period.")
     ),
@@ -137,12 +137,18 @@ ui <- bslib::page_navbar(
                                       after routine detection")
               ),
               accordion_panel("Timing within detectable period",
-                slider_input_from_file("second_half_vs_first_mm",
+                slider_input_from_file("accrual_first_half_mm",
                                       "Of personal DALYs that accrue during detectable period, 
-                                      proportion in 2nd half"),
-                slider_input_from_file("second_half_vs_first_transmission",
+                                      proportion in 1st half of that period"),
+                slider_input_from_file("accrual_first_half_transmission",
                                       "Of transmission that occurs during detectable period, 
-                                      proportion in 2nd half")
+                                      proportion in 1st half of that period"),
+                slider_input_from_file("accrual_power_mm",
+                                      "Concentration of personal DALY accrual late in detectable period (power relationship)", step = 0.1),
+                slider_input_from_file("accrual_power_transmission",
+                                      "Concentration of transmission late in detectable period (power relationship)", step = 0.1)
+
+
               )
             ) # end accordion
           ), # end sidebarPanel
@@ -238,11 +244,13 @@ server <- function(input, output) {
     )
   })
 
-  # Create a reactive list of all slider input values for second block
+  # # Create a reactive list of all slider input values for second block
   sliderValues2 <- reactive({
     list(
-      second_half_vs_first_mm = input$second_half_vs_first_mm,
-      second_half_vs_first_transmission = input$second_half_vs_first_transmission,
+      accrual_first_half_mm = input$accrual_first_half_mm,
+      accrual_first_half_transmission = input$accrual_first_half_transmission,
+      accrual_power_mm = input$accrual_power_mm,
+      accrual_power_transmission = input$accrual_power_transmission,
       predetection_mm = input$predetection_mm,
       predetection_transmission = input$predetection_transmission,
       postrx_mm = input$postrx_mm,

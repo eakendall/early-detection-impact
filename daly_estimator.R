@@ -19,7 +19,7 @@ dalys_per_average_case <- function(estimates = midpoint_estimates, plot = FALSE)
   transmission_average_case <-
     downstream_cases *
     (mortality_average_case + morbidity_average_case + sequelae_average_case) *
-    ((1 - discounting_rate)^1)#(downstream_timing))
+    ((1 - discounting_rate)^(downstream_timing))
   
   
   # output a dataframe with the different components, classified as "cumulative" (vs averted) dalys for hte "average" (vs detected) case
@@ -30,7 +30,7 @@ dalys_per_average_case <- function(estimates = midpoint_estimates, plot = FALSE)
     "sequelae" = sequelae_average_case) %>% 
     mutate(cumulative_or_averted = "cumulative",
            average_or_detected = "average") %>%
-    pivot_longer(cols = c(transmission, morbidity, mortality, sequelae))
+    pivot_longer(cols = c(transmission, sequelae, mortality, morbidity))
   
   if(plot)
     print(plot_averages(averages))
@@ -46,15 +46,47 @@ dalys_per_average_case <- function(estimates = midpoint_estimates, plot = FALSE)
 # and how much of the rest is in the second half of the disease course vs the first? 
 # Assuming a linearly increase over time for those who eventually get treated, and a symmetric rise and fall for those who spontaneously resolve. 
 
+# Functions for estimating timing of accrual
+# setting total integral  to 1, we can Solve (used mathematica):
+# Solve[{r0 + r1/(1 + p) == 1,  
+#   r0/2 + (2^(-1 - p) r1)/(1 + p) == f }, {r0, r1}]
+#{r0 -> (-1 + 2^(1 + p) f)/(-1 + 2^p), 
+#   r1 -> -((2^p (-1 + 2 f) (1 + p))/(-1 + 2^p))}}
+
+accrual_rate_params <- function(f, p)
+{
+    r0 <- (-1 + 2^(1 + p) * f)/(-1 + 2^p)
+    r1 <-  -((2^p * (-1 + 2 * f) * (1 + p))/(-1 + 2^p))
+    if (r0 < 0) r0 <- 0; r1 = 1
+    return(c(r0=r0, r1=r1))
+    }
+
+# And for such a function, the proportion averted by screening is another integral:
+# of t*r(t):
+# Integrate[t * (r0 + r1 t^p), {t, 0, 1}]
+# --> 
+# (-1 + 2^(1 + p) f)/(2 (-1 + 2^p)) - (
+#  2^p (-1 + 2 f) (1 + p))/((-1 + 2^p) (2 + p))
+
+averted_proportion <- function(f, p)
+{
+    return(
+        (-1 + 2^(1 + p) * f) / 
+            (2 * (-1 + 2^p)) - 
+        (2^p * (-1 + 2 * f) * (1 + p)) / 
+            ((-1 + 2^p) * (2 + p))
+        )
+    }
+
 within_case_avertible <- function(estimates = midpoint_estimates)
 {
   with(estimates, {
     
     average_proportion_avertible_mm <- (1-predetection_mm - postrx_mm)*
-      (second_half_vs_first_mm) 
+      (averted_proportion(accrual_first_half_mm, accrual_power_mm))
 
     average_proportion_avertible_transmission <- (1-predetection_transmission - postrx_transmission)*
-      (second_half_vs_first_transmission)
+      (averted_proportion(accrual_first_half_transmission, accrual_power_transmission))
 
       return(list(
         "average_proportion_avertible_mm" = average_proportion_avertible_mm,
