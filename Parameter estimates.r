@@ -40,7 +40,7 @@ hivpos_deaths <- 187000
 # https://www.who.int/teams/global-tuberculosis-programme/tb-reports/global-tuberculosis-report-2022/tb-disease-burden/2-1-tb-incidence
 
 
-# Health life expectancy at age 40, globally
+# Healthy life expectancy at age 40, globally
 lifetable <- read.csv("region_life_tables.csv")
 lifetable %>% 
     filter(Period == 2019,
