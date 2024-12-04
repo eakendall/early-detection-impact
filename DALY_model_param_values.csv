@@ -19,5 +19,5 @@
 "accrual_first_half_transmission",0.33,0.1,0.5,"accrual_first_half_transmission"
 "accrual_power_mm",3,2,4,"accrual_power_mm"
 "accrual_power_transmission",1.5,1,2,"accrual_power_transmission"
-"covariance_mortality_duration",-0.1,-0.5,0,"covariance_mortality_duration"
+"covariance_mortality_duration",-0.4,-1,0,"covariance_mortality_duration"
 "covariance_transmission_duration",1,0.5,1.5,"covariance_transmission_duration"
