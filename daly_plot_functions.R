@@ -87,123 +87,133 @@ plot_time_course <- function(within_case = NULL, estimates = midpoint_estimates)
 {
   if(missing(within_case)) within_case <- within_case_cumulative_and_averted(estimates = estimates)
 
-  plotdata <- rbind(within_case,
+  plotdata <- rbind(# total DALYs
+                    within_case,
+                    # during detectabnle period
                     within_case %>% filter(cumulative_or_averted=="cumulative") %>%
                       mutate(cumulative_or_averted="detectable",
                              value = value*case_when(name=="transmission" ~ (1-estimates$predetection_transmission -    estimates$postrx_transmission),
                                                      TRUE ~ (1-estimates$predetection_mm - estimates$postrx_mm))),
+                    # before detectable period
                     within_case %>% filter(cumulative_or_averted=="cumulative") %>%
                       mutate(cumulative_or_averted="pre",
                              value = value*case_when(name=="transmission" ~ estimates$predetection_transmission,
                                                      TRUE ~ estimates$predetection_mm)),
+                    # after detectable period
                     within_case %>% filter(cumulative_or_averted=="cumulative") %>%
                       mutate(cumulative_or_averted="post",
                              value = value*case_when(name=="transmission" ~ estimates$postrx_transmission,
                                                      TRUE ~ estimates$postrx_mm)))
                    
   
-  # If second half area is s fraction of total, with arbitrary detectable period width 2 (from -1 to +1) and midpoint height 1, 
-  # then overall detectable area is 2;second half area is 2s;
-  # ending height h2 is such that (h2+1)/2*1= 2s -> h2 = 4s - 1;
-  # and initial height h1 of the first half is such that (h1+1)/2*1= 2-2s) --> h1 = 3 - 4s 
+  # arbitrary detectable period width 1 (from 0 to +1) and 
+  # transmission and mm DALYs accrual rates each r0 + r1*t^p, 
+  # with f, p, and {r0, r1}(f,p) specific to mm or transmission.
   
-  h1_transmission <- 3 - 4 * estimates$second_half_vs_first_transmission
-  h2_transmission <- 4 * estimates$second_half_vs_first_transmission - 1
-  h1_mm <- 3 - 4 * estimates$second_half_vs_first_mm
-  h2_mm <- 4 * estimates$second_half_vs_first_mm - 1
+  accrual_rate_params_transmission <- 
+      accrual_rate_params(f = estimates$accrual_first_half_transmission, 
+                                                          p = estimates$accrual_power_transmission)
+  accrual_rate_params_mm <- 
+      accrual_rate_params(f = estimates$accrual_first_half_mm,
+                          p = estimates$accrual_power_mm)
   
-  # we're going to go around the polygon, first across the top. left to right, then bottom right to left. 
-  # xs are defined by start of predetect for transmission and mm, then start/end of detectable, then end of post rx for transmission and mm. 
-  # we'll define heights at each point (with bases at 0), then stack. 
-  rect_points <- as_tibble(t(c("x1" = -1,
-                               "x2" = -1,
-                               "x3" = 1,
-                               "x4" = 1)))
-  
-  rect_points <- rbind(rect_points %>% mutate(component = "morbidity"),
-                       rect_points %>% mutate(component = "mortality"),
-                       rect_points %>% mutate(component = "sequelae"),
-                       rect_points %>% mutate(component = "transmission"))
-                       
-  
-  rect_points <- rect_points %>% mutate(y1=0,
-                                        y2=unlist(c(h1_mm, h1_mm, h1_mm, h1_transmission)*
-                                                    (within_case %>% filter(cumulative_or_averted=="cumulative") %>% 
-                                                     arrange(match(name, rect_points$component)) %>% select(value))),
-                                        y3= unlist(c(h2_mm, h2_mm, h2_mm, h2_transmission)*
-                                                     (within_case %>% filter(cumulative_or_averted=="cumulative") %>% 
-                                                        arrange(match(name, rect_points$component)) %>% select(value))),
-                                        y4=0)
-  # now need to stack them
-  rect_points_stacked <- rect_points %>% mutate(y2 = cumsum(y2), y3 = cumsum(y3)) %>%
-                                          mutate(y1 = c(0, y2[1:3]), y4 = c(0, y3[1:3]))
 
-  toplot <- rect_points_stacked %>%
-    pivot_longer(-component,
-                 names_to = c(".value", "id"),
-                 names_pattern = "(\\D)(\\d+)") %>%
-    mutate(component = factor(component, levels = rev(c("morbidity","mortality", "sequelae", "transmission"))))
+  # plot accrual rates in the detectable periods as stacked polygons
+  plotdata <- data.frame(x = seq(0,1,0.01)) %>% 
+    mutate( y_transmission =   (accrual_rate_params_transmission[1] + 
+                        accrual_rate_params_transmission[2] * x^estimates$accrual_power_transmission) * 
+                        unlist((within_case %>% filter(cumulative_or_averted=="cumulative", 
+                                                  name == "transmission") %>% 
+                                           select(value))),
+          y_morbidity = (accrual_rate_params_mm[1] +
+                    accrual_rate_params_mm[2] * x^estimates$accrual_power_mm) * 
+                    unlist((within_case %>% filter(cumulative_or_averted=="cumulative", 
+                                                  name == "morbidity") %>% 
+                                           select(value))),
+          y_mortality = (accrual_rate_params_mm[1] + 
+                  accrual_rate_params_mm[2] * x^estimates$accrual_power_mm) * 
+                  unlist((within_case %>% filter(cumulative_or_averted=="cumulative", 
+                                                name == "mortality") %>% 
+                                      select(value))),
+          y_sequelae = (accrual_rate_params_mm[1] +
+                  accrual_rate_params_mm[2] * x^estimates$accrual_power_mm) * 
+                  unlist((within_case %>% filter(cumulative_or_averted=="cumulative", 
+                                                name == "sequelae") %>% 
+                                      select(value)))) %>%
+    # remove "y_" when creating component column of long format
+    pivot_longer(-x, names_to = "component", names_pattern = "y_(.*)", values_to = "y")
 
-  # make gradient of x shadings for "before dectectability" rectangle
-  n <- 1000
-  x_steps <- seq(from = min(rect_points_stacked$x1), to = 1.4*min(rect_points_stacked$x1), length.out = n + 1)
-  alpha_steps <- seq(from = 0.3, to = 0, length.out = n)
-  rect_grad <- data.frame(xmin = x_steps[-(n + 1)], 
-                          xmax = x_steps[-1], 
-                          alpha = alpha_steps,
-                          ymin = 0,
-                          ymax = max(rect_points_stacked$y3))
-
-  time_course_plot <- ggplot(data = toplot) +
-    geom_polygon(aes(x = x, y = y, group = component, fill = component)) +
-    scale_fill_discrete(breaks = rev(levels(toplot$component))) +
+  # plot the accrual rates as stacked polygons
+  detectable_plot_period <- ggplot(data = plotdata %>% 
+                                  # reverse order of levels so that transmission is on top
+                                  mutate(component = fct_rev(fct_relevel(component, "morbidity", "mortality", "sequelae", "transmission"))),
+                                   ) +
+    geom_area(aes(x = x, y = y, group = component, fill = component), 
+          position = position_stack()) +
+    scale_fill_discrete(breaks = c("transmission", "sequelae", "mortality", "morbidity")) +
     xlab("Time during detectable period") +
-    ylab("DALY accrual rate (arbitrary scale)") +
-    scale_x_discrete(labels = NULL, breaks = NULL) +
+    ylab("DALY accrual rate") +
+    scale_x_continuous(labels = NULL, breaks = NULL, limits=c(-0.25, 1.25)) +
     scale_y_discrete(labels = NULL, breaks = NULL) +
     theme_minimal() +
+    geom_vline(xintercept = 0.5) +
+    ggtitle("Timing of DALY accrual") +
+    theme(axis.text = element_text(size = 16),
+          plot.title = element_text(size = 16))
+
+  # Add gradient rectangle
+  n <- 100
+  ymax <- max(ggplot_build(detectable_plot_period)$data[[1]]$y)
+  x_steps <- seq(from = -0.25, to = 0, length.out = n + 1)
+  alpha_steps <- seq(from = 0.3, to = 0, length.out = n)
+  rect_grad <- data.frame(xmin = x_steps[-1], 
+                          xmax = x_steps[-n], 
+                          alpha = rev(alpha_steps),
+                          ymin = 0,
+                          ymax = ymax)
+
+  time_course_plot <- 
+    detectable_plot_period +
     geom_rect(data=rect_grad, 
               aes(xmin=xmin, xmax=xmax,
                   ymin=ymin, ymax=ymax, 
                   alpha=alpha), fill="gray") + 
-    guides(alpha = "none") + 
-    geom_vline(data = rect_points_stacked, aes(xintercept = min(x4))) +
-    annotate(geom = "text", x = 1.15 * max(rect_points_stacked$x1), y = max(rect_points_stacked$y4) / 2,
+    guides(alpha = "none", fill = guide_legend(reverse = FALSE)) + 
+    geom_vline(aes(xintercept = 1)) +
+    annotate(geom = "text", x = -0.05, y = ymax/2,
              label = "before detectability", angle = 90, size=4, fontface = "italic") +
-    annotate(geom = "text", x = 1.08 * min(rect_points_stacked$x4), y = max(rect_points_stacked$y4) / 2,
+    annotate(geom = "text", x = 1.05, y = ymax / 2,
              label = "after routine detection", angle = 90, size=4, fontface = "italic") +
-    guides(fill = guide_legend(reverse = TRUE)) +
     ggtitle("Timing of DALY accrual") +
     theme(axis.text = element_text(size = 16),
           plot.title = element_text(size = 16),
           legend.position = "inside",
-          legend.position.inside = c(.4,.7)) + 
+          legend.position.inside = c(.35,.7)) + 
     # at top of plot, add horizontal arrows from o to 1 and from 0 to -1
-     annotate("segment", x = 0.04, y = max(rect_points_stacked$y3), xend = 1, yend = max(rect_points_stacked$y3), 
+     annotate("segment", x = 0.52, y = ymax, xend = 0.95, yend = ymax, 
          linejoin = "mitre", linewidth = 5, color = "gray40",
          arrow = arrow(type = "closed", length = unit(0.01, "npc"))) +
-    annotate("text", x = 0.08, y = max(rect_points_stacked$y3), label = "More likely to avert", color = "white", 
+    annotate("text", x = 0.54, y = ymax, label = "More likely to avert", color = "white", 
          hjust = 0, size = 3) + 
-
-    annotate("segment", x = -0.04, y = max(rect_points_stacked$y3), xend = -1, yend = max(rect_points_stacked$y3), 
+    annotate("segment", x = 0.48, y = ymax, xend = 0.05, yend = ymax, 
          linejoin = "mitre", linewidth = 5, color = "gray40",
          arrow = arrow(type = "closed", length = unit(0.01, "npc"))) +
-    annotate("text", x = -0.08, y = max(rect_points_stacked$y3), label = "Less likely to avert", color = "white", 
+    annotate("text", x = 0.46, y = ymax, label = "Less likely to avert", color = "white", 
          hjust = 1, size = 3)
 
       
     return(time_course_plot)
 }
 
-# For manuscript, add lines showing potential timing of detection
-fig3 <- plot_time_course() + 
-  geom_vline(xintercept = 2/3, linetype = "dashed") + 
-  geom_vline(xintercept = -2/3, linetype = "dotted") + 
-  geom_vline(xintercept = 0, linetype = "dotdash") + 
-  theme(legend.background = element_rect(fill = "white"),
-          axis.title.y = element_text(vjust=-25),
-          axis.title =  element_text(face = 'bold')) + 
-  ggtitle("")
+# # # For manuscript, add lines showing potential timing of detection
+# fig3 <- plot_time_course() + 
+#   geom_vline(xintercept =0.8, linetype = "dashed") + 
+#   geom_vline(xintercept = 0.2, linetype = "dotted") + 
+#   geom_vline(xintercept = 0, linetype = "dotdash") +
+#   theme(legend.background = element_rect(fill = "white"),
+#           axis.title.y = element_text(vjust=0), 
+#           axis.title =  element_text(face = 'bold')) + 
+#   ggtitle("")
   
 
 # As three vertically arranged panels, 
@@ -297,7 +307,7 @@ plot_heterogeneity <- function(estimates = midpoint_estimates,
       label = "Mean duration of detectable period", angle = 90, hjust = 0, vjust = -1) +
     geom_vline(xintercept = 1, linetype = "dashed") + 
     annotate(geom = "text", y = 1, x = 0.9, 
-      label = "Mortality of the average case", angle = 0, hjust = -1, vjust = -1) +
+      label = "Average mortality risk per TB episode", angle = 0, hjust = -1, vjust = -1) +
     xlab("Relative duration \n(= relative probability of detection during ACF))") +
     ylab("Relative DALYs\nfrom TB mortality") +
     xlim(0, quantile(MVN[,"Y1"], 0.99)) +
@@ -320,10 +330,10 @@ plot_heterogeneity <- function(estimates = midpoint_estimates,
     #   label = "Mean duration of detectable period", angle = 90, hjust = 0, vjust = -1) +
     geom_vline(xintercept = 1, linetype = "dashed") + 
     annotate(geom = "text", y = 1, x = 0.9, 
-      label = "Transmission from the average case", angle = 0, hjust = -1, vjust = -1) +
+      label = "Average transmission per TB episode", angle = 0, hjust = -1, vjust = -1) +
     xlab("Relative duration \n(= relative probability of detection during ACF))") +
     ylab("Relative DALYs\nfrom transmission") + 
-    annotate(geom = "text", y = 1, x = 0.9, label = "Transmission from the average case", 
+    annotate(geom = "text", y = 1, x = 0.9, label = "Average transmission per TB episode", 
       angle = 0, hjust = -1, vjust = -1) + 
     xlim(0, quantile(MVN[,"Y1"], 0.99)) +
     ylim(0, quantile(MVN[,"Y3"], 0.99))
@@ -454,20 +464,22 @@ plot_averted_portion <- function(output, ymax = NULL, base = "detected")
                    # make a stacked bar plot of "cumulative", and shade the "averted" portion of each in gray
                 aes(x=average_or_detected, y=value, fill=ordered_component, pattern = cumulative_or_averted)) +
           geom_col_pattern(position = "stack", width = 1,
-            pattern_fill = 'black',  pattern_spacing = 0.015) +
+            pattern_fill = 'black',  pattern_spacing = 0.015, pattern_size = 0.02, pattern_density = 0.1) +
           scale_pattern_manual(name = "Averted by early detection?", 
                                values = c("stripe", "none"), 
                                breaks = c("averted", "difference"),
                                labels = c("Averted", "Not averted")) +
-        theme_minimal() + xlab("") + ylab("DALYs") + 
-        guides(fill="none") +
+         theme_minimal() + xlab("") + ylab("DALYs") + 
+        guides(fill = guide_legend(title = "DALY component")) +
         theme(axis.text.x = element_blank(),
           axis.ticks.x = element_blank(),
           panel.grid.major.x = element_blank(),
           panel.grid.minor.x = element_blank(),
           axis.text.y = element_text(size = 14),
           plot.title = element_text(size = 16),
-          legend.position = "bottom")
+          legend.position = "bottom",
+          # stack the legends vertically for fill and pattern
+          legend.box = "vertical")
 
     
   if (base == "detected") plot <- plot + ggtitle("DALYs per *detected* case") else
@@ -478,4 +490,4 @@ plot_averted_portion <- function(output, ymax = NULL, base = "detected")
  return(plot)
 }
 
-plot_averted_portion()
+# plot_averted_portion()

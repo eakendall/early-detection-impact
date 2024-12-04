@@ -4,7 +4,7 @@ library(ggbrace)
 
 # Make an illustrative figure of the morbidity of TB over time
 # X axis is "Time with TB (arbitrary scale)"
-# Y axis is "Symptom severity (arbitrary scale)"
+# Y axis is "Symptom severity (DALY accrual rate, arbitrary scale)"
 # There are horizontal lines indicating three different symptom thresholds: "Mild, nonspecific symptoms", "Recognized symptoms", and "Severe symptoms" 
 # There is a monotonically increasing curve that starts at zero and ends at 1, representing the progression of symptoms over time. We'll make up data to define this. 
 # The total area under this curve is filled in a color representing the total time with TB,
@@ -12,7 +12,7 @@ library(ggbrace)
 
 # Make up data for how sypmtoms progress over time
 time <- seq(0,1,0.01)
-symptoms <- time^2
+symptoms <- time^3
 # combine into a dataframe
 symptom_data <- data.frame(time, symptoms)
 
@@ -31,7 +31,7 @@ fig1 <- ggplot(symptom_data) + geom_area(aes(x = time, y = symptoms), fill = "ca
     annotate("text", x = 0.1, y = thresholds[2] + 0.01, label = "Recognized symptoms", hjust = 0, vjust = 0) +
     annotate("text", x = 0.1, y = thresholds[3] + 0.01, label = "Severe symptoms", hjust = 0, vjust = 0) +
   theme_minimal() +
-  labs(x = "Time (arbitrary scale)", y = "Symptom severity (arbitrary scale)", title = "Illustrative TB disease course") + 
+  labs(x = "Time", y = "Symptom severity or disability", title = "Illustrative TB disease course") + 
     theme(axis.text = element_blank()) 
   
 

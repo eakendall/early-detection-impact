@@ -1,4 +1,5 @@
 library(tidyverse)
+library(boot)
 
 # Mean age at TB incidence, globally
 
@@ -26,21 +27,8 @@ sum(unlist(tb_ages %>% ungroup())*age_medians)/sum(unlist(tb_ages %>% ungroup())
 # and mean is ~39.
 
 
-# TB case fatality ratio by HIV status
-incidence <- 10600000
-hivpos_incidence <- 703000
-hivneg_incidence <-  incidence - hivpos_incidence
 
-hivneg_deaths <- 1380000
-hivpos_deaths <- 187000
-
-(cfr_hivpos <- hivpos_deaths/hivpos_incidence)
-(cfr_hivneg <- hivneg_deaths/hivneg_incidence)
-# https://www.who.int/teams/global-tuberculosis-programme/tb-reports/global-tuberculosis-report-2022/tb-disease-burden/2-2-tb-mortality
-# https://www.who.int/teams/global-tuberculosis-programme/tb-reports/global-tuberculosis-report-2022/tb-disease-burden/2-1-tb-incidence
-
-
-# Health life expectancy at age 40, globally
+# Healthy life expectancy at age 40, globally
 lifetable <- read.csv("region_life_tables.csv")
 lifetable %>% 
     filter(Period == 2019,
@@ -63,24 +51,47 @@ summary(unlist(rates))
 # IQR -0-4% per year
 
 
+# TB case fatality ratio by HIV status
+incidence <- 10600000
+hivpos_incidence <- 703000
+hivneg_incidence <-  incidence - hivpos_incidence
+
+hivneg_deaths <- 1380000
+hivpos_deaths <- 187000
+
+# https://www.who.int/teams/global-tuberculosis-programme/tb-reports/global-tuberculosis-report-2022/tb-disease-burden/2-2-tb-mortality
+# https://www.who.int/teams/global-tuberculosis-programme/tb-reports/global-tuberculosis-report-2022/tb-disease-burden/2-1-tb-incidence
+
+
+(cfr_hivpos <- hivpos_deaths/hivpos_incidence)
+(cfr_hivneg <- hivneg_deaths/hivneg_incidence)
+
+cfr_hivpos/cfr_hivneg
 
 # Covariance, mortality and duration
 # If HIV+ = 2x risk of death, and 1/2 the duration, with cvs of 1, ...
-# Model relative duration as gamma with CV of 1:
+
+# What if immune status is a latent class, and HIV is just strongly associated with it?
+immune_status <- rnorm(n=10000, 0, 5)
+# rank order immune status
+immune_status <- immune_status[order(immune_status)]
+hiv_status <- rbinom(n=10000, size=1, prob= 0.4*inv.logit(-immune_status))
+mean(hiv_status)
+plot(inv.logit(-immune_status), hiv_status)
+cor(immune_status, hiv_status)
+# sample durations 
 duration <- rgamma(10000, 1,1)
-mean(duration)
-sd(duration)
-# Compare the upper half of duration to lower half of duration -- too much.
-mean(duration[duration > median(duration)])/mean(duration[duration < median(duration)])
-# if HIV+ is half the duration on average, and HIV is imperfectly correlated with duration:
-# Assign simulated HIV Status such that mean duration of HIV+ is 2x mean duration of HIV-
-hiv_status <- rbinom(n=10000, size=1, prob=1/(1.15+duration))
+# order durations with some error
+duration <- duration[order(duration + rnorm(10000, 0, 1))]
 mean(duration[hiv_status == 1])/mean(duration[hiv_status == 0])
-# And simulate mortality risk as 2x greater for HIV+, but also on a relative scale with mean of 1:
-mortality <- inv.logit(rnorm(10000, -2+hiv_status, 1))
-mortality <- mortality/mean(mortality)
-mean(mortality)
-sd(mortality)
+plot(immune_status, duration)
+summary(duration)
+summary(immune_status)
+
+# assign mortality, strongly correlated with immune status
+mortality <- rbinom(10000, 1, 0.4*inv.logit(-0.5*immune_status -0.5))
+summary(mortality)
 mean(mortality[hiv_status == 1])/mean(mortality[hiv_status == 0])
-# And then calculate the covariance between the two
+
 cor(duration, mortality) * sd(duration) * sd(mortality)
+cor(duration/mean(duration), mortality/mean(mortality)) * sd(duration/mean(duration)) * sd(mortality/mean(mortality))

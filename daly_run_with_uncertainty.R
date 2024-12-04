@@ -101,6 +101,16 @@ summarize_uncertainty <- function(outcome_vector)
     mutate(name = str_to_title(name)) %>% 
     # move "Total" row to last
     arrange(name == "Total") %>%
+    write_clip()
+ 
+ fortable %>%
+    group_by(name) %>%
+    select(-paramset) %>%
+    summarise_all(~if(is.numeric(.)) summarize_uncertainty(.)
+                  else name) %>%
+    mutate(name = str_to_title(name)) %>% 
+    # move "Total" row to last
+    arrange(name == "Total") %>%
     kable(., format = "html",
           col.names=c("Source", rep(c("Average incident case", "Average detected case"), times = 2)),
           digits = 2) %>%
