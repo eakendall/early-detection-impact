@@ -141,7 +141,7 @@ plot_time_course <- function(within_case = NULL, estimates = midpoint_estimates)
                                                 name == "sequelae") %>% 
                                       select(value)))) %>%
     # remove "y_" when creating component column of long format
-    pivot_longer(-x, names_to = "component", names_pattern = "y_(.*)", values_to = "y")
+    pivot_longer(-x, names_to = "component", names_pattern = "y_(.*)", values_to = "y") 
 
   # plot the accrual rates as stacked polygons
   detectable_plot_period <- ggplot(data = plotdata %>% 
@@ -150,13 +150,16 @@ plot_time_course <- function(within_case = NULL, estimates = midpoint_estimates)
                                    ) +
     geom_area(aes(x = x, y = y, group = component, fill = component), 
           position = position_stack()) +
-    scale_fill_discrete(breaks = c("transmission", "sequelae", "mortality", "morbidity")) +
-    xlab("Time during detectable period") +
-    ylab("DALY accrual rate") +
+    scale_fill_discrete(breaks = c("transmission", "sequelae", "mortality", "morbidity"), 
+    #  change labels in legend
+    labels = c("Transmission", "Post-TB Sequelae", "TB Mortality", "TB Morbidity")
+    ) +
+    xlab("Time during detectable window") +
+    ylab("DALYs accrued per unit time") +
     scale_x_continuous(labels = NULL, breaks = NULL, limits=c(-0.25, 1.25)) +
     scale_y_discrete(labels = NULL, breaks = NULL) +
     theme_minimal() +
-    geom_vline(xintercept = 0.5) +
+    geom_vline(xintercept = 0.5, linetype = "dotted") +
     ggtitle("Timing of DALY accrual") +
     theme(axis.text = element_text(size = 16),
           plot.title = element_text(size = 16))
@@ -181,9 +184,9 @@ plot_time_course <- function(within_case = NULL, estimates = midpoint_estimates)
     guides(alpha = "none", fill = guide_legend(reverse = FALSE)) + 
     geom_vline(aes(xintercept = 1)) +
     annotate(geom = "text", x = -0.05, y = ymax/2,
-             label = "before detectability", angle = 90, size=4, fontface = "italic") +
+             label = "Before detectability", angle = 90, size=4, fontface = "italic") +
     annotate(geom = "text", x = 1.05, y = ymax / 2,
-             label = "after routine detection", angle = 90, size=4, fontface = "italic") +
+             label = "After routine detection (or death or resolution)", angle = 90, size=4, fontface = "italic") +
     ggtitle("Timing of DALY accrual") +
     theme(axis.text = element_text(size = 16),
           plot.title = element_text(size = 16),
@@ -205,15 +208,142 @@ plot_time_course <- function(within_case = NULL, estimates = midpoint_estimates)
     return(time_course_plot)
 }
 
-# # # For manuscript, add lines showing potential timing of detection
-# fig3 <- plot_time_course() + 
-#   geom_vline(xintercept =0.8, linetype = "dashed") + 
-#   geom_vline(xintercept = 0.2, linetype = "dotted") + 
-#   geom_vline(xintercept = 0, linetype = "dotdash") +
-#   theme(legend.background = element_rect(fill = "white"),
-#           axis.title.y = element_text(vjust=0), 
-#           axis.title =  element_text(face = 'bold')) + 
-#   ggtitle("")
+
+# # # For manuscript, remove title
+# and make an arbitrary function that looks like we want:
+
+plot_time_course_manuscript <- function(within_case = NULL, estimates = midpoint_estimates, nolabels = FALSE)
+{
+  if(missing(within_case)) within_case <- within_case_cumulative_and_averted(estimates = estimates)
+
+  plotdata <- rbind(# total DALYs
+                    within_case,
+                    # during detectabnle period
+                    within_case %>% filter(cumulative_or_averted=="cumulative") %>%
+                      mutate(cumulative_or_averted="detectable",
+                             value = value*case_when(name=="transmission" ~ (1-estimates$predetection_transmission -    estimates$postrx_transmission),
+                                                     TRUE ~ (1-estimates$predetection_mm - estimates$postrx_mm))),
+                    # before detectable period
+                    within_case %>% filter(cumulative_or_averted=="cumulative") %>%
+                      mutate(cumulative_or_averted="pre",
+                             value = value*case_when(name=="transmission" ~ estimates$predetection_transmission,
+                                                     TRUE ~ estimates$predetection_mm)),
+                    # after detectable period
+                    within_case %>% filter(cumulative_or_averted=="cumulative") %>%
+                      mutate(cumulative_or_averted="post",
+                             value = value*case_when(name=="transmission" ~ estimates$postrx_transmission,
+                                                     TRUE ~ estimates$postrx_mm)))
+                   
+  
+  # arbitrary detectable period width 1 (from 0 to +1) and 
+  # transmission and mm DALYs accrual rates each a * b^t, 
+  # with a and b specific to mm or transmission.
+  
+  a_t <- 0.1; b_t <- 10; a_mm <- 0.05; b_mm <- 20
+
+  # plot accrual rates in the detectable periods as stacked polygons
+  plotdata <- data.frame(x = seq(-1,1,0.01)) %>% 
+    mutate( y_transmission =   (a_t * b_t ^ x) * 
+                        unlist((within_case %>% filter(cumulative_or_averted=="cumulative", 
+                                                  name == "transmission") %>% 
+                                           select(value))),
+          y_morbidity = (a_mm * b_mm ^ x) *
+                    unlist((within_case %>% filter(cumulative_or_averted=="cumulative", 
+                                                  name == "morbidity") %>% 
+                                           select(value))),
+          y_mortality = (a_mm * b_mm ^ x) *
+                  unlist((within_case %>% filter(cumulative_or_averted=="cumulative", 
+                                                name == "mortality") %>% 
+                                      select(value))),
+          y_sequelae = (a_mm * b_mm ^ x) *
+                  unlist((within_case %>% filter(cumulative_or_averted=="cumulative", 
+                                                name == "sequelae") %>% 
+                                      select(value)))) %>%
+    # remove "y_" when creating component column of long format
+    pivot_longer(-x, names_to = "component", names_pattern = "y_(.*)", values_to = "y") 
+
+  # add rows to plot data showing drop from x=1 to x=1.25, with linear 50% reduction in y
+  plotdata2 <- rbind(plotdata, 
+                      plotdata %>% filter(x==1) %>% mutate(y = y*0.2, x = 1.1))
+
+  # plot the accrual rates as stacked polygons
+  plot_period <- ggplot(data = plotdata2 %>% 
+                                  # reverse order of levels so that transmission is on top
+                                  mutate(component = fct_rev(fct_relevel(component, "morbidity", "mortality", "sequelae", "transmission"))),
+                                   ) +
+    geom_area(aes(x = x, y = y, group = component, fill = component), 
+          position = position_stack()) +
+    scale_fill_discrete(breaks = c("transmission", "sequelae", "mortality", "morbidity"), 
+    #  change labels in legend
+    labels = c("Transmission", "Post-TB Sequelae", "TB Mortality", "TB Morbidity")
+    ) +
+    scale_x_continuous(labels = NULL, breaks = NULL, limits=c(-0.25, 1.25)) +
+    scale_y_discrete(labels = NULL, breaks = NULL) +
+    theme_minimal()
+    
+  if (nolabels) return(plot_period + 
+  theme(axis.title = element_blank()) + 
+  theme(legend.position="none") + 
+  scale_fill_manual(values=rev(c("#a02c93","#0e9ed5","#1a6b25","#e97132"))) 
+         )  else 
+
+  {
+  plot_period_labeled <- 
+    plot_period + 
+    xlab("Time during detectable window") +
+    ylab("DALYs accrued per unit time") +
+    geom_vline(xintercept = 0.5, linetype = "dotted") + 
+    theme(axis.text = element_text(size = 16),
+          plot.title = element_text(size = 16))
+
+
+
+  # Add two transparent rectangles
+  ymax <- max(ggplot_build(plot_period)$data[[1]]$y)
+
+  time_course_plot <- 
+    plot_period_labeled +
+    annotate("rect", xmin=-0.25, xmax=-0,
+                  ymin=0, ymax=ymax, 
+                  alpha=0.7, fill="gray") +
+    annotate("rect", xmin=1, xmax=1.1,
+                  ymin=0, ymax=ymax, 
+                  alpha=0.7, fill="gray") + 
+    guides(alpha = "none", fill = guide_legend(reverse = FALSE)) + 
+    geom_vline(aes(xintercept = 1)) +
+    annotate(geom = "text", x = -0.12, y = ymax/2,
+             label = "Before detectability", angle = 90, size=4, fontface = "italic") +
+    annotate(geom = "text", x = 1.05, y = ymax / 2,
+             label = "After routine detection (or death or resolution)", angle = 90, size=4, fontface = "italic") +
+    theme(axis.text = element_text(size = 16),
+          plot.title = element_text(size = 16),
+          legend.position = "inside",
+          legend.position.inside = c(.35,.7)) + 
+    # at top of plot, add horizontal arrows from o to 1 and from 0 to -1
+     annotate("segment", x = 0.52, y = ymax, xend = 0.95, yend = ymax, 
+         linejoin = "mitre", linewidth = 5, color = "gray40",
+         arrow = arrow(type = "closed", length = unit(0.01, "npc"))) +
+    annotate("text", x = 0.54, y = ymax, label = "More likely to avert", color = "white", 
+         hjust = 0, size = 3) + 
+    annotate("segment", x = 0.48, y = ymax, xend = 0.05, yend = ymax, 
+         linejoin = "mitre", linewidth = 5, color = "gray40",
+         arrow = arrow(type = "closed", length = unit(0.01, "npc"))) +
+    annotate("text", x = 0.46, y = ymax, label = "Less likely to avert", color = "white", 
+         hjust = 1, size = 3)
+
+      
+    return(time_course_plot)
+  }
+}
+
+
+fig3 <- plot_time_course_manuscript() + 
+  # change color scheme for fill
+  scale_fill_manual(values=rev(c("#a02c93","#0e9ed5","#1a6b25","#e97132"))) + 
+  theme(legend.background = element_rect(fill = "white"),
+          axis.title.y = element_text(vjust=0), 
+          axis.title =  element_text(face = 'bold')) 
+  
   
 
 # As three vertically arranged panels, 
@@ -304,7 +434,7 @@ plot_heterogeneity <- function(estimates = midpoint_estimates,
     theme(axis.text.x = element_blank(), axis.text.y = element_blank()) +
     geom_hline(yintercept = 1, linetype = "dashed") +
     annotate(geom = "text", x = 1, y = 0.1, 
-      label = "Mean duration of detectable period", angle = 90, hjust = 0, vjust = -1) +
+      label = "Mean duration of detectable window", angle = 90, hjust = 0, vjust = -1) +
     geom_vline(xintercept = 1, linetype = "dashed") + 
     annotate(geom = "text", y = 1, x = 0.9, 
       label = "Average mortality risk per TB episode", angle = 0, hjust = -1, vjust = -1) +

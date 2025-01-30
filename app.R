@@ -44,7 +44,7 @@ ui <- bslib::page_navbar(
 
   collapsible = TRUE,
 
-  tabPanel("Total DALYs per average TB case",
+  tabPanel("Total DALYs per average TB episode",
     # organize as 4 navbarPages, for the three input sections plus the final results
     # within each tabPanel, include a results card
     layout_columns(
@@ -59,7 +59,8 @@ ui <- bslib::page_navbar(
               # multiple = TRUE,
               accordion_panel(
                 title = "TB morbidity",
-                slider_input_from_file("tb_symptom_duration", "Duration of symptoms (years) per TB episode", step = 0.1),
+                slider_input_from_file("tb_symptom_duration", "Duration of symptoms (years) per TB episode", 
+                  step = 0.02),
                 slider_input_from_file("tb_symptom_dw", "Disability weight while symptomatic")
               ),
               accordion_panel(
@@ -166,7 +167,7 @@ ui <- bslib::page_navbar(
       ) # end results card
     ) # end layout_columns
   ), # end tabPanel
-  tabPanel("Average vs detected cases",
+  tabPanel("Average vs detected TB",
     card(
       min_height = 100,
       max_height = 250,
@@ -174,7 +175,7 @@ ui <- bslib::page_navbar(
       card_header("Overview of heterogeneity portion of model"),
       p("Individuals who are detected through screening may have different disease courses than those who are not. This section models the differences between the two groups."),
       p("Individuals who are detectable for longer (prior to routine diagnosis, death, or spontaneous resolution) are more likely to be detected through screening. These same individuals may generate more cumulative transmission, whereas those with more rapidly progressive disease and shorter duration may be at higher risk for mortality."),
-      p("These relationships are parametrized as covariances. For illustrative purposes, they are simulated here assuming log-normal distributions of duration, transmission, and mortality; the model used for DALY impact estimation is more general, however.")
+      p("These relationships are parametrized as covariances, after normalizing duration, transmission effects, and mortality effects to each have a mean of 1. For illustrative purposes, they are simulated here assuming log-normal distributions of duration, transmission, and mortality; the model used for DALY impact estimation is more general, however.")
     ),
     # within each tabPanel, include a results card
     layout_columns(
