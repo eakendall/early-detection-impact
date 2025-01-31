@@ -290,47 +290,65 @@ plot_time_course_manuscript <- function(within_case = NULL, estimates = midpoint
   {
   plot_period_labeled <- 
     plot_period + 
-    xlab("Time during detectable window") +
+    xlab("Time with TB") +
     ylab("DALYs accrued per unit time") +
-    geom_vline(xintercept = 0.5, linetype = "dotted") + 
     theme(axis.text = element_text(size = 16),
           plot.title = element_text(size = 16))
 
 
 
-  # Add two transparent rectangles
+  # Add four superimposed transparent rectangles representing portions averted by different screening timepoints
   ymax <- max(ggplot_build(plot_period)$data[[1]]$y)
 
   time_course_plot <- 
     plot_period_labeled +
-    annotate("rect", xmin=-0.25, xmax=-0,
+    annotate("rect", xmin=0, xmax=1,
                   ymin=0, ymax=ymax, 
-                  alpha=0.7, fill="gray") +
-    annotate("rect", xmin=1, xmax=1.1,
+                  alpha=0.1, fill="gray") +
+    annotate("rect", xmin=0.125, xmax=1,
                   ymin=0, ymax=ymax, 
-                  alpha=0.7, fill="gray") + 
+                  alpha=0.2, fill="gray") +
+    annotate("rect", xmin=0.375, xmax=1,
+                  ymin=0, ymax=ymax, 
+                  alpha=0.3, fill="gray") +
+    annotate("rect", xmin=0.625, xmax=1,
+                  ymin=0, ymax=ymax, 
+                  alpha=0.3, fill="gray") + 
+    annotate("rect", xmin=0.875, xmax=1,
+                  ymin=0, ymax=ymax, 
+                  alpha=0.3, fill="gray") + 
     guides(alpha = "none", fill = guide_legend(reverse = FALSE)) + 
     geom_vline(aes(xintercept = 1)) +
-    annotate(geom = "text", x = -0.12, y = ymax/2,
-             label = "Before detectability", angle = 90, size=4, fontface = "italic") +
-    annotate(geom = "text", x = 1.05, y = ymax / 2,
-             label = "After routine detection (or death or resolution)", angle = 90, size=4, fontface = "italic") +
+    geom_vline(aes(xintercept = 0), lty = 'dashed') +
+    annotate(geom = "text", x = -0.02, y = -0.1,
+             label = "Before\ndetectability", 
+             hjust = 1, vjust = 1, angle = 0, size=4, fontface = "italic") +
+    annotate(geom = "text", x = 1.02, y = -0.1,
+             label = "After routine\ndetection\n(or death\nor resolution)", 
+             hjust = 0, vjust = 1, angle = 0, size=4, fontface = "italic") +
+    annotate(geom = "text", x = 0.5, y = -0.1,
+             label = "Detectable window", 
+             vjust = 1, angle = 0, size=4, fontface = "italic") + 
     theme(axis.text = element_text(size = 16),
           plot.title = element_text(size = 16),
+          legend.title=element_blank(),
           legend.position = "inside",
-          legend.position.inside = c(.35,.7)) + 
-    # at top of plot, add horizontal arrows from o to 1 and from 0 to -1
-     annotate("segment", x = 0.52, y = ymax, xend = 0.95, yend = ymax, 
+          legend.position.inside = c(0.1,.8)) + 
+    # at top of plot, add horizontal arrows from o to 1
+     annotate("segment", x = 0.02, y = -0.4, xend = 0.95, yend = -0.4, 
          linejoin = "mitre", linewidth = 5, color = "gray40",
          arrow = arrow(type = "closed", length = unit(0.01, "npc"))) +
-    annotate("text", x = 0.54, y = ymax, label = "More likely to avert", color = "white", 
-         hjust = 0, size = 3) + 
-    annotate("segment", x = 0.48, y = ymax, xend = 0.05, yend = ymax, 
-         linejoin = "mitre", linewidth = 5, color = "gray40",
-         arrow = arrow(type = "closed", length = unit(0.01, "npc"))) +
-    annotate("text", x = 0.46, y = ymax, label = "Less likely to avert", color = "white", 
-         hjust = 1, size = 3)
-
+    annotate("text", x = 0.54, y = -0.4, 
+      label = "Increasing probabiliy that screening occurred by this point", color = "white", 
+         size = 3) + 
+    # add small downward arrows at x = 0.125, 0.275, 0.625, 0.857 and y = ymax
+    annotate("segment", x = c(0.125, 0.375, 0.625, 0.875), y = ymax + 0.1, 
+                        xend = c(0.125, 0.375, 0.625, 0.875), yend = ymax, 
+         linejoin = "mitre", linewidth = 1, color = "gray40",
+         arrow = arrow(type = "closed", length = unit(0.01, "npc"))) + 
+    annotate("text", x = 0.5, y = ymax + 0.2, 
+         label = "Illustrative screening time points", fontface = "italic") 
+        
       
     return(time_course_plot)
   }
