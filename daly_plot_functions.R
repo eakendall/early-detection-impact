@@ -154,7 +154,7 @@ plot_time_course <- function(within_case = NULL, estimates = midpoint_estimates)
     #  change labels in legend
     labels = c("Transmission", "Post-TB Sequelae", "TB Mortality", "TB Morbidity")
     ) +
-    xlab("Time during detectable window") +
+    xlab("Time during screen-detectable window") +
     ylab("DALYs accrued per unit time") +
     scale_x_continuous(labels = NULL, breaks = NULL, limits=c(-0.25, 1.25)) +
     scale_y_discrete(labels = NULL, breaks = NULL) +
@@ -327,7 +327,7 @@ plot_time_course_manuscript <- function(within_case = NULL, estimates = midpoint
              label = "After routine\ndetection\n(or death\nor resolution)", 
              hjust = 0, vjust = 1, angle = 0, size=4, fontface = "italic") +
     annotate(geom = "text", x = 0.5, y = -0.1,
-             label = "Detectable window", 
+             label = "Screen-detectable window", 
              vjust = 1, angle = 0, size=4, fontface = "italic") + 
     theme(axis.text = element_text(size = 16),
           plot.title = element_text(size = 16),
@@ -355,7 +355,7 @@ plot_time_course_manuscript <- function(within_case = NULL, estimates = midpoint
 }
 
 
-fig3 <- plot_time_course_manuscript() + 
+fig4 <- plot_time_course_manuscript() + 
   # change color scheme for fill
   scale_fill_manual(values=rev(c("#a02c93","#0e9ed5","#1a6b25","#e97132"))) + 
   theme(legend.background = element_rect(fill = "white"),
@@ -452,7 +452,7 @@ plot_heterogeneity <- function(estimates = midpoint_estimates,
     theme(axis.text.x = element_blank(), axis.text.y = element_blank()) +
     geom_hline(yintercept = 1, linetype = "dashed") +
     annotate(geom = "text", x = 1, y = 0.1, 
-      label = "Mean duration of detectable window", angle = 90, hjust = 0, vjust = -1) +
+      label = "Mean duration of screen-detectable window", angle = 90, hjust = 0, vjust = -1) +
     geom_vline(xintercept = 1, linetype = "dashed") + 
     annotate(geom = "text", y = 1, x = 0.9, 
       label = "Average mortality risk per TB episode", angle = 0, hjust = -1, vjust = -1) +
@@ -475,7 +475,7 @@ plot_heterogeneity <- function(estimates = midpoint_estimates,
     theme(axis.text.x = element_blank(), axis.text.y = element_blank()) +
     geom_hline(yintercept = 1, linetype = "dashed") +
     # annotate(geom = "text", x = 1, y = 0.1,
-    #   label = "Mean duration of detectable period", angle = 90, hjust = 0, vjust = -1) +
+    #   label = "Mean duration of screen-detectable window", angle = 90, hjust = 0, vjust = -1) +
     geom_vline(xintercept = 1, linetype = "dashed") + 
     annotate(geom = "text", y = 1, x = 0.9, 
       label = "Average transmission per TB episode", angle = 0, hjust = -1, vjust = -1) +

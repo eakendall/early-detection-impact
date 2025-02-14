@@ -21,7 +21,7 @@ params$posttb_death_timing <- c(5,1,10) #mean years to death, for those who die 
 
 # Transmission
 params$downstream_cases <- c(0.9, 0.4, 2) # Estimated from Shrestha et al Step change model with one symptomatic or asympatomic case removed at present day. 
-params$downstream_timing <- c(8, 2, 20) # Median time to downstream cases. Will apply time series discounting to exponential decay. 
+params$downstream_timing <- c(8, 5, 15) # Median time to downstream cases. Will apply time series discounting to exponential decay. 
 
 
 # Second block of params, needed for time course

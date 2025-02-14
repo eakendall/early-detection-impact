@@ -236,3 +236,16 @@ nrow(ce_selected)
 summary(ce_selected$WTP) 
 quantile(ce_selected$WTP, c(0.05, 0.95)) 
 quantile(ce_selected$WTP, c(0.1, 0.9)) 
+
+
+
+# calculate specifically for the three countries in the manuscript
+library(dplyr)
+ce_table %>% filter(country %in% c("Zimbabwe", "China", "Zambia"))
+
+(c(180, 963, 435)/2.4 ) / c(698, 5203, 494)
+
+ce_table %>% filter(country=="Vietnam")
+
+1495*2.4
+
