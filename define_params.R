@@ -86,8 +86,5 @@ nicenames <- list(
     "accrual_first_half_transmission" = "Early-detectable-period transmission",
     "accrual_power_mm" = "Late detectable period power for morbidity and mortality",
     "accrual_power_transmission" = "Late detectable period power for transmission",
-    # "duration_cv" = "Disease duration heterogeneity",
-    # "mortality_cv" = "Mortality risk heterogeneity",
-    # "transmission_cv" = "Transmission heterogeneity",
     "covariance_mortality_duration" = "Mortality-duration covariance",
     "covariance_transmission_duration" = "Transmission-duration covariance")

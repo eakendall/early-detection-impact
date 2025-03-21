@@ -240,3 +240,14 @@ for(param in univariate_sensitivity$param)
   }
 univariate_sensitivity[order(abs(prccs$PCC$original), decreasing = T),]
 
+
+
+# proportion from transmission
+sampled_dalys_df %>% 
+  filter(cumulative_or_averted=="averted", average_or_detected=="detected") %>% 
+  pivot_wider(names_from = name) %>% 
+  mutate(contribution = transmission/(transmission+morbidity+mortality+sequelae)) %>% 
+  summarise(
+    median(1-contribution), quantile(1-contribution, 0.025), quantile(1-contribution, 0.975),
+    median(contribution), quantile(contribution, 0.025), quantile(contribution, 0.975))
+

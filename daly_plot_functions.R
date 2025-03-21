@@ -355,12 +355,15 @@ plot_time_course_manuscript <- function(within_case = NULL, estimates = midpoint
 }
 
 
-fig4 <- plot_time_course_manuscript() + 
-  # change color scheme for fill
-  scale_fill_manual(values=rev(c("#a02c93","#0e9ed5","#1a6b25","#e97132"))) + 
-  theme(legend.background = element_rect(fill = "white"),
-          axis.title.y = element_text(vjust=0), 
-          axis.title =  element_text(face = 'bold')) 
+# fig4 <- plot_time_course_manuscript() + 
+#   # change color scheme for fill
+#   scale_fill_manual(values=rev(c("#a02c93","#0e9ed5","#1a6b25","#e97132"))) + 
+#   theme(legend.background = element_rect(fill = "white"),
+#           axis.title.y = element_text(vjust=0), 
+#           axis.title =  element_text(face = 'bold')) 
+# # save as pdf
+# ggsave("../fig4.pdf", fig4, width = 8, height = 6)
+
   
   
 

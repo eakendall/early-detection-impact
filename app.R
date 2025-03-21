@@ -4,10 +4,10 @@ library(bslib)
 library(tidyverse)
 library(plotly)
 
-source("daly_estimator.R")
-source("daly_plot_functions.R")
+source("daly_estimator.R"); print("sourced estimator")
+source("daly_plot_functions.R"); print("sourced plot functions")
 
-paramdf <- read.csv("DALY_model_param_values.csv", header = T)
+paramdf <- read.csv("DALY_model_param_values.csv", header = T); print("read params")
 
 slider_input_from_file <- function(id, label, paramtable = paramdf, step = NULL) {
   sliderInput(id, label, 
@@ -333,5 +333,7 @@ server <- function(input, output) {
       pull(y))))
 }
 
+
+print("read to call app")
 # call the shiny app ----
 shinyApp(ui = ui, server = server)
