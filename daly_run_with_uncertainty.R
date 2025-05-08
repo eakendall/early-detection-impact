@@ -112,11 +112,12 @@ summarize_uncertainty <- function(outcome_vector)
     # move "Total" row to last
     arrange(name == "Total") %>%
     kable(., format = "html",
-          col.names=c("Source", rep(c("Average incident case", "Average detected case"), times = 2)),
+          col.names=c("Source of DALYs", "All TB", "Screening-detectable TB", "Assuming uniformity", "Accounting for heterogeneity"),
+          # rep(c("Average incident case", "Average detected case"), times = 2)),
           digits = 2) %>%
     kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE) %>%
     add_header_above(., header =
-      c(" " = 1, "Total cumulative DALYs per case" = 2, "Averted by early detection" = 2)) %>% 
+      c(" " = 1, "Average DALYs per TB episode" = 2, "DALYs averted through screening" = 2)) %>% 
     row_spec(5, bold = T, hline_after = T)
 
 
@@ -222,4 +223,31 @@ grid.arrange(result_boxplot +
               theme(plot.title.position = "plot"), 
             ncol=1) 
 
+
+# Explore range of total DALYs averted for aech of top parameters in isolation
+
+univariate_sensitivity <- paramdf[,c("param", "mid", "low", "high")]
+univariate_sensitivity$highoutput <- univariate_sensitivity$lowoutput <- NA
+for(param in univariate_sensitivity$param)
+{
+  estimateslow <- estimateshigh <-  midpoint_estimates
+  estimateslow[param] <- paramdf[param,"low"]
+  estimateshigh[param] <- paramdf[param,"high"]
+  univariate_sensitivity[param, "lowoutput"] <- daly_estimator(estimates = as.list(estimateslow)) %>% 
+    filter(cumulative_or_averted == "averted", average_or_detected == "detected") %>% summarise(sum(value))
+  univariate_sensitivity[param, "highoutput"] <- daly_estimator(estimates = as.list(estimateshigh)) %>%
+    filter(cumulative_or_averted == "averted", average_or_detected == "detected") %>% summarise(sum(value))
+  }
+univariate_sensitivity[order(abs(prccs$PCC$original), decreasing = T),]
+
+
+
+# proportion from transmission
+sampled_dalys_df %>% 
+  filter(cumulative_or_averted=="averted", average_or_detected=="detected") %>% 
+  pivot_wider(names_from = name) %>% 
+  mutate(contribution = transmission/(transmission+morbidity+mortality+sequelae)) %>% 
+  summarise(
+    median(1-contribution), quantile(1-contribution, 0.025), quantile(1-contribution, 0.975),
+    median(contribution), quantile(contribution, 0.025), quantile(contribution, 0.975))
 

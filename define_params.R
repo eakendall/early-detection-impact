@@ -21,7 +21,7 @@ params$posttb_death_timing <- c(5,1,10) #mean years to death, for those who die 
 
 # Transmission
 params$downstream_cases <- c(0.9, 0.4, 2) # Estimated from Shrestha et al Step change model with one symptomatic or asympatomic case removed at present day. 
-params$downstream_timing <- c(8, 2, 20) # Median time to downstream cases. Will apply time series discounting to exponential decay. 
+params$downstream_timing <- c(8, 5, 15) # Median time to downstream cases. Will apply time series discounting to exponential decay. 
 
 
 # Second block of params, needed for time course
@@ -86,8 +86,5 @@ nicenames <- list(
     "accrual_first_half_transmission" = "Early-detectable-period transmission",
     "accrual_power_mm" = "Late detectable period power for morbidity and mortality",
     "accrual_power_transmission" = "Late detectable period power for transmission",
-    # "duration_cv" = "Disease duration heterogeneity",
-    # "mortality_cv" = "Mortality risk heterogeneity",
-    # "transmission_cv" = "Transmission heterogeneity",
     "covariance_mortality_duration" = "Mortality-duration covariance",
     "covariance_transmission_duration" = "Transmission-duration covariance")
