@@ -29,7 +29,8 @@ plot_averages <- function(output_dalys_per_average_case = NULL,
                    mutate(ordered_component = fct_relevel(component, "Transmission", "Post-TB Sequelae", "TB Mortality", "TB Morbidity")),
                  aes(x=average_or_detected, y=value, fill=ordered_component)) +  
     geom_col(position = "stack", width = 1) +  
-    theme_minimal() + xlab("") + ylab("DALYs") + ggtitle("Total DALYS generated per average case") + 
+    theme_minimal() + xlab("") + ylab("DALYs") + 
+    ggtitle("Step 1: DALYs associated with average TB episode") + 
     guides(fill="none") +
     theme(axis.text.x = element_blank(),
           axis.ticks.x = element_blank(),
@@ -74,7 +75,7 @@ plot_detectable_proportion <- function(averages_plot, estimates=midpoint_estimat
                 fill="gray", alpha=0.3) + 
       annotate(geom="text", x=1.5 - postrx_mm/2, y=0.1, 
                label="Accrues after routine diagnosis", angle=90, hjust=0) + 
-      ggtitle("Avertible DALYs per average case") +
+      ggtitle("Step 3: Avertible DALYs from early detection\nof average TB episode") +
       ylab("Cumulative DALYs")
     return(detectable_period_plot)
   } )
@@ -159,7 +160,7 @@ plot_time_course <- function(within_case = NULL, estimates = midpoint_estimates)
     scale_x_continuous(labels = NULL, breaks = NULL, limits=c(-0.25, 1.25)) +
     scale_y_discrete(labels = NULL, breaks = NULL) +
     theme_minimal() +
-    geom_vline(xintercept = 0.5, linetype = "dotted") +
+    geom_vline(xintercept = 0, linetype = "dotted") +
     ggtitle("Timing of DALY accrual") +
     theme(axis.text = element_text(size = 16),
           plot.title = element_text(size = 16))
@@ -177,10 +178,10 @@ plot_time_course <- function(within_case = NULL, estimates = midpoint_estimates)
 
   time_course_plot <- 
     detectable_plot_period +
-    geom_rect(data=rect_grad, 
-              aes(xmin=xmin, xmax=xmax,
-                  ymin=ymin, ymax=ymax, 
-                  alpha=alpha), fill="gray") + 
+    # geom_rect(data=rect_grad, 
+    #           aes(xmin=xmin, xmax=xmax,
+    #               ymin=ymin, ymax=ymax, 
+    #               alpha=alpha), fill="gray") + 
     guides(alpha = "none", fill = guide_legend(reverse = FALSE)) + 
     geom_vline(aes(xintercept = 1)) +
     annotate(geom = "text", x = -0.05, y = ymax/2,
@@ -401,7 +402,7 @@ plot_heterogeneity <- function(estimates = midpoint_estimates,
 
   simulate_correlated_variables <- function(covarianceA, covarianceB, sigma11 = NULL)
   { 
-    if (covarianceA < -1/exp(1)) stop("Covariance must be at least -1/e this illustration using log-normals to work, although our DALY model is valid for covariances from -1 to infinity.")
+    if (covarianceA < -1/exp(1)) stop("This illustration represents duration as log-normally distributed, and therefore requires covariance to equal at least -1/e. However, the underlying DALY model does not assume any particular distribution of disease duration and is valid for covariances ranging from -1 to infinity.")
 
     if(missing(sigma11)) sigma11 <- max(ceiling(sqrt(abs(covarianceA))),
                                         ceiling(sqrt(abs(covarianceB))),
@@ -464,11 +465,16 @@ plot_heterogeneity <- function(estimates = midpoint_estimates,
     xlim(0, quantile(MVN[,"Y1"], 0.99)) +
     ylim(0, quantile(MVN[,"Y2"], 0.99))
 
-  if(error_flag_mortality) scatter1 <- scatter1 +
-  # add text on top of plot
-    annotate(geom = "text", x = 1.1, y = 1.1,
-      label = "Covariance too low for\nillustration with lognormals\n(but still valid for DALY model)",
-      angle = 0, hjust = 0, vjust = 0, size=6, fontface="bold")
+  if(error_flag_mortality) scatter1 <- 
+  ggplot() + 
+  annotate("text", x = 4, y = 25, size=8, 
+    label = "Covariance too low for\nillustration with lognormals\n(but still valid for DALY model)") + 
+  theme_void()
+  #  scatter1 +
+  # # add text on top of plot
+  #   annotate(geom = "text", x = 1.1, y = 1.1,
+  #     label = "Covariance too low for\nillustration with lognormals\n(but still valid for DALY model)",
+  #     angle = 0, hjust = 0, vjust = 0, size=6, fontface="bold")
     
   scatter2 <- 
     ggplot(data=MVN, aes(x=Y1, y=Y3)) + 
@@ -489,11 +495,16 @@ plot_heterogeneity <- function(estimates = midpoint_estimates,
     xlim(0, quantile(MVN[,"Y1"], 0.99)) +
     ylim(0, quantile(MVN[,"Y3"], 0.99))
 
-  if(error_flag_transmission) scatter2 <- scatter2 + 
-  # add text on top of plot
-    annotate(geom = "text", x = 1.1, y = 1.1, 
-      label = "Covariance too low for\nillustration with lognormals\n(but still valid for DALY model)",
-      angle = 0, hjust = 0, vjust = 0, size=6, fontface="bold")
+  if(error_flag_transmission) scatter2 <- 
+    ggplot() + 
+    annotate("text", x = 4, y = 25, size=8, 
+      label = "Covariance too low for\nillustration with lognormals\n(but still valid for DALY model)") + 
+    theme_void()
+  # scatter2 + 
+  # # add text on top of plot
+  #   annotate(geom = "text", x = 1.1, y = 1.1, 
+  #     label = "Covariance too low for\nillustration with lognormals\n(but still valid for DALY model)",
+  #     angle = 0, hjust = 0, vjust = 0, size=6, fontface="bold")
 
   # Arrange the two figures in a column, with transmission first
 
@@ -544,11 +555,12 @@ output_table <- function(output, forsummary = 0)
 
     outputtable <- useoutput %>% 
     kable(., format = "html",
-          col.names=c("Source", rep(c("Average incident case", "Average detected case"), times = 2)),
+          col.names=c("Source", 
+              "All tuberculosis", "Screening-detectable tuberculosis", "If detection probabilities were uniform", "Accounting for heterogeneity"),
           digits = 2) %>%
     kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE) %>%
     add_header_above(., header =
-      c(" " = 1, "Total cumulative DALYs per case" = 2, "Averted by early detection" = 2)) %>% 
+      c(" " = 1, "DALYS per TB episode" = 2, "DALYs averted by early detection" = 2)) %>% 
     row_spec(5, bold = T, hline_after = T)
 
 return(outputtable)
@@ -634,7 +646,7 @@ plot_averted_portion <- function(output, ymax = NULL, base = "detected")
 
     
   if (base == "detected") plot <- plot + ggtitle("DALYs per *detected* case") else
-    plot <- plot + ggtitle("DALYS per *average* case")
+    plot <- plot + ggtitle("DALYS per *average* TB episode")
   
   if (!is.null(ymax)) plot <- plot + ylim(0,ymax)
                                               

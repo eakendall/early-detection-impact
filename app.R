@@ -20,7 +20,7 @@ slider_input_from_file <- function(id, label, paramtable = paramdf, step = NULL)
 .boot_dep <- "https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.0.0/css/bootstrap.min.css"
 
 ui <- bslib::page_navbar(
-  title = "ACF Impact",
+  title = "Early TB detection DALY estimator",
 
   # change font sizes/formatting of all sliders
   tags$head(
@@ -58,18 +58,18 @@ ui <- bslib::page_navbar(
               id = "average case inputs",
               # multiple = TRUE,
               accordion_panel(
-                title = "TB morbidity",
+                title = "Inputs: TB morbidity",
                 slider_input_from_file("tb_symptom_duration", "Duration of symptoms (years) per TB episode", 
                   step = 0.02),
                 slider_input_from_file("tb_symptom_dw", "Disability weight while symptomatic")
               ),
               accordion_panel(
-                title = "TB mortality",
+                title = "Inputs: TB mortality",
                 slider_input_from_file("tb_cfr", "TB case fatality ratio"),
                 slider_input_from_file("tb_death_yearslost", "Years of life lost per TB death")
               ),
               accordion_panel(
-                title = "Sequelae",
+                title = "Inputs: Sequelae",
                 slider_input_from_file("posttb_symptom_duration", "Time lived after TB (years)"),
                 slider_input_from_file("posttb_symptom_dw", "Average disability weight after TB", step = 0.02),
                 slider_input_from_file("posttb_cfr", "Post-TB fatality ratio 
@@ -79,14 +79,14 @@ ui <- bslib::page_navbar(
                 slider_input_from_file("posttb_death_timing", "Mean time to death from TB sequelae (years)")
               ),
               accordion_panel(
-                title = "Transmission",
+                title = "Inputs: Transmission",
                 slider_input_from_file("downstream_cases",
                                        "# of attributable downstream cases", step = 0.25),
                 slider_input_from_file("downstream_timing",
                                        "Mean years to downstream cases")
               ),
               accordion_panel(
-              title = "Temporal discounting",
+              title = "Inputs: Temporal discounting",
               slider_input_from_file("discounting_rate", "Annual discounting rate",
                                      step = 0.005)
               ),
@@ -104,78 +104,16 @@ ui <- bslib::page_navbar(
       )
     ) # end layout_columns
   ), # end tabPanel
-  tabPanel("Timing of DALY accrual",
-    card(
-      max_height = 250,
-      full_screen = TRUE,
-      card_header("Overview of DALY accrual portion of model"),
-      p("Disease in the present may increase the risk of future morbidity, mortality, and secondary cases. 'Accrual' refers to when future DALYs become inevitable, even if they haven't yet occurred."),
-      p("Some DALYs may accrue before TB becomes detectable through screening, or after it would be diagnosed through routine care even without screening. These will not be affected by early detection."),
-      p("Within the detectable period, the rate of DALY accrual may increase over time as disease becomes more severe. Cross-sectional screening will intercept TB at a random point in its disease course and thus preferentially averts the proportion of DALYs that accrue later in the detectable period.")
-    ),
-    layout_columns(
-      col_widths = c(9,3),
-      card(
-        sidebarLayout(
-          sidebarPanel(
-            width = 5,
-            style = "height: 90vh; overflow-y: auto;",
-            accordion(
-              accordion_panel("Accrual before detectability",
-                slider_input_from_file("predetection_mm",
-                                      "Proportion of morbidity and mortality that accrue 
-                                      before TB becomes detectable by screening algorithm"),
-                slider_input_from_file("predetection_transmission",
-                                      "Proportion of transmission that occurs 
-                                      before TB becomes detectable by screening algorithm")
-              ),
-              accordion_panel("Accrual after routine diagnosis",
-                slider_input_from_file("postrx_mm",
-                                      "Proportion of morbidity and mortality that accrue 
-                                      after routine detection"),
-                slider_input_from_file("postrx_transmission",
-                                      "Proportion of transmission that occurs 
-                                      after routine detection")
-              ),
-              accordion_panel("Timing within detectable period",
-                slider_input_from_file("accrual_first_half_mm",
-                                      "Of personal DALYs that accrue during detectable period, 
-                                      proportion in 1st half of that period"),
-                slider_input_from_file("accrual_first_half_transmission",
-                                      "Of transmission that occurs during detectable period, 
-                                      proportion in 1st half of that period"),
-                slider_input_from_file("accrual_power_mm",
-                                      "Concentration of personal DALY accrual late in detectable period (power relationship)", step = 0.1),
-                slider_input_from_file("accrual_power_transmission",
-                                      "Concentration of transmission late in detectable period (power relationship)", step = 0.1)
-
-
-              )
-            ) # end accordion
-          ), # end sidebarPanel
-          mainPanel(
-            style = "height: 90vh; overflow-y: auto;",
-            width = 7,
-            plotOutput("proportions_plot"),
-            plotOutput("time_course_plot")
-          )
-        ) # end sidebarLayout
-      ), # end main card
-      card(
-        card_header("Results summary"),
-        htmlOutput("results_table_forsummary2")
-      ) # end results card
-    ) # end layout_columns
-  ), # end tabPanel
+  
   tabPanel("Average vs detected TB",
     card(
       min_height = 100,
       max_height = 250,
       full_screen = TRUE,
       card_header("Overview of heterogeneity portion of model"),
-      p("Individuals who are detected through screening may have different disease courses than those who are not. This section models the differences between the two groups."),
-      p("Individuals who are detectable for longer (prior to routine diagnosis, death, or spontaneous resolution) are more likely to be detected through screening. These same individuals may generate more cumulative transmission, whereas those with more rapidly progressive disease and shorter duration may be at higher risk for mortality."),
-      p("These relationships are parametrized as covariances, after normalizing duration, transmission effects, and mortality effects to each have a mean of 1. For illustrative purposes, they are simulated here assuming log-normal distributions of duration, transmission, and mortality; the model used for DALY impact estimation is more general, however.")
+      p("Individuals whose TB is preferentially detected through screening may have disease courses that (even without screening) differ from the average."),
+      p("Individuals whose TB is detectable for a longer time period (prior to routine diagnosis, death, or spontaneous resolution) are more likely to be detected through screening. These same individuals may generate more cumulative transmission, whereas those with more rapidly progressive disease of shorter duration may be at higher risk for mortality."),
+      p("These relationships are parametrized as covariances, after normalizing duration, transmission contribution, and mortality risk to each have a mean of 1. For illustrative purposes, they are simulated here assuming log-normal distributions of duration, transmission, and mortality. The model used for DALY impact estimation is more general, however, and is valid even for covariance values not able to be illustrated in the figure.")
     ),
     # within each tabPanel, include a results card
     layout_columns(
@@ -186,11 +124,11 @@ ui <- bslib::page_navbar(
             width = 5,
             style = "height: 90vh; overflow-y: auto;",
             accordion(
-              accordion_panel("Duration and Transmission",
+              accordion_panel("Inputs: Duration and Transmission",
                 slider_input_from_file("covariance_transmission_duration",
                                   "Transmission-duration covariance", step = 0.1)
               ),
-              accordion_panel("Duration and mortality",
+              accordion_panel("Inputs: Duration and mortality",
                 slider_input_from_file("covariance_mortality_duration",
                                   "Mortality-duration covariance")
               )
@@ -208,7 +146,68 @@ ui <- bslib::page_navbar(
       ) # end results card
     ) # end layout_columns
   ),
-  tabPanel("Results - DALYs averted per case detected",
+  tabPanel("Timing of DALY accrual",
+    card(
+      max_height = 250,
+      full_screen = TRUE,
+      card_header("Overview of DALY accrual portion of model"),
+      p("Disease in the present may increase the risk of future morbidity, mortality, and secondary cases. 'Accrual' refers to when future DALYs become inevitable, even if they haven't yet occurred."),
+      p("Some DALYs may accrue before TB becomes detectable through screening, or after it would be diagnosed through routine care even without screening. These will not be affected by early detection."),
+      p("Within the detectable period, the rate of DALY accrual may increase over time as disease becomes more severe. Cross-sectional screening will intercept TB at a random point in its disease course and thus preferentially averts the proportion of DALYs that accrue later in the detectable period.")
+    ),
+    layout_columns(
+      col_widths = c(9,3),
+      card(
+        sidebarLayout(
+          sidebarPanel(
+            width = 5,
+            style = "height: 90vh; overflow-y: auto;",
+            accordion(
+              accordion_panel("Inputs: Accrual before detectability",
+                slider_input_from_file("predetection_mm",
+                                      "Proportion of morbidity and mortality that accrue 
+                                      before TB becomes detectable by screening algorithm"),
+                slider_input_from_file("predetection_transmission",
+                                      "Proportion of transmission that occurs 
+                                      before TB becomes detectable by screening algorithm")
+              ),
+              accordion_panel("Inputs: Accrual after routine diagnosis",
+                slider_input_from_file("postrx_mm",
+                                      "Proportion of morbidity and mortality that accrue 
+                                      after routine detection"),
+                slider_input_from_file("postrx_transmission",
+                                      "Proportion of transmission that occurs 
+                                      after routine detection")
+              ),
+              accordion_panel("Inputs: Timing within detectable period",
+                slider_input_from_file("accrual_first_half_mm",
+                                      "Of personal DALYs that accrue during detectable period, 
+                                      proportion in 1st half of that period"),
+                slider_input_from_file("accrual_first_half_transmission",
+                                      "Of transmission that occurs during detectable period, 
+                                      proportion in 1st half of that period"),
+                slider_input_from_file("accrual_power_mm",
+                                      "Concentration of personal DALY accrual late in detectable period (power relationship)", step = 0.1),
+                slider_input_from_file("accrual_power_transmission",
+                                      "Concentration of transmission late in detectable period (power relationship)", step = 0.1)
+              )
+            ) # end accordion
+          ), # end sidebarPanel
+          mainPanel(
+            style = "height: 90vh; overflow-y: auto;",
+            width = 7,
+            plotOutput("proportions_plot"),
+            plotOutput("time_course_plot")
+          )
+        ) # end sidebarLayout
+      ), # end main card
+      card(
+        card_header("Results summary"),
+        htmlOutput("results_table_forsummary2")
+      ) # end results card
+    ) # end layout_columns
+  ), # end tabPanel
+  tabPanel("Results - DALYs averted per early detection",
     fluidRow(
       column(width = 4,
         plotOutput("averages_plot_with_averted")
