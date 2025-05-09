@@ -1,0 +1,10 @@
+name: early-detection-impact
+title:
+username: eakendall
+account: eakendall
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 14716392
+bundleId: 10253317
+url: https://eakendall.shinyapps.io/early-detection-impact/
+version: 1
