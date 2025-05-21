@@ -21,9 +21,10 @@ slider_input_from_file <- function(id, label, paramtable = paramdf, step = NULL)
 
 ui <- bslib::page_navbar(
   title = "Early TB detection DALY estimator",
+  collapsible = TRUE,
 
   # change font sizes/formatting of all sliders
-  tags$head(
+  header = tags$head(
     tags$style(HTML("
       .irs-bar {width: 100%; height: 25px; background: black; border-top: 1px solid black; border-bottom: 1px solid black;}
       .irs-bar-edge {background: black; border: 1px solid black; height: 25px; border-radius: 0px; width: 20px;}
@@ -41,8 +42,6 @@ ui <- bslib::page_navbar(
       # font-style: italic; }'
     )
   ),
-
-  collapsible = TRUE,
 
   tabPanel("Total DALYs per average TB episode",
     # organize as 4 navbarPages, for the three input sections plus the final results
@@ -195,7 +194,7 @@ ui <- bslib::page_navbar(
           ), # end sidebarPanel
           mainPanel(
             style = "height: 90vh; overflow-y: auto;",
-            width = 7,
+            width = 4,
             plotOutput("proportions_plot"),
             plotOutput("time_course_plot")
           )
@@ -219,7 +218,26 @@ ui <- bslib::page_navbar(
         plotOutput("averted_plot")
       )
     )
+  ),
+  # Footer section
+  footer = tags$footer(
+    style = "
+      background-color: #f8f9fa;
+      text-align: center;
+      padding: 10px;
+      font-size: 12px;
+      border-top: 1px solid #e7e7e7;",
+    "For more information: 'The health impact of identifying a person with tuberculosis through systematic screening,",
+    tags$a(href = "https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(25)00214-2/abstract", "Lancet Inf Dis 2025"),
+    " | ",
+    tags$a(href = "https://github.com/eakendall/early-detection-impact", "Model code"),
+    " | ",
+    tags$a(href = "https://github.com/eakendall/early-detection-impact/blob/master/DALY%20impact%20of%20ACF%20supplement.pdf", "Supplement"),
+    " | ",
+    tags$a(href = "https://github.com/eakendall/early-detection-impact/blob/master/DALY%20impact%20of%20early%20detection%20submitted%20version%20Feb%202025.pdf", "Preprint")
+    
   )
+ 
 ) # end ui
 
 
