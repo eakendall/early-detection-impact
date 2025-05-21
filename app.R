@@ -227,7 +227,7 @@ ui <- bslib::page_navbar(
       padding: 10px;
       font-size: 12px;
       border-top: 1px solid #e7e7e7;",
-    "For more information: 'The health impact of identifying a person with tuberculosis through systematic screening,",
+    "For more information: 'The health impact of identifying a person with tuberculosis through systematic screening,'",
     tags$a(href = "https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(25)00214-2/abstract", "Lancet Inf Dis 2025"),
     " | ",
     tags$a(href = "https://github.com/eakendall/early-detection-impact", "Model code"),
